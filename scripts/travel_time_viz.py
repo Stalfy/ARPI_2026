@@ -136,7 +136,7 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
             "Max segment travel time (seconds)",
             min_value=1,
             max_value=max(max_time, 1),
-            value=min(1300, max(max_time, 1)),
+            value=min(7200, max(max_time, 1)),
         )
         df = df.filter(pl.col(COL["travel_time"]) <= max_segment_time)
 
