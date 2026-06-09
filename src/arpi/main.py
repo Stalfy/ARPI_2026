@@ -14,8 +14,8 @@ import polars as pl
 from arpi.discovery import iter_day_dirs
 from arpi.discovery.files import FileClient
 from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.rt_parser import GtfsRtParser
 from arpi.discovery.gtfs_mapping import run as map_gtfs
+from arpi.discovery.rt_parser import GtfsRtParser
 from arpi.models.transit import FeedType, FetchRequest, TimePeriod
 
 _DEFAULT_GTFS_ROOT = "GTFS"

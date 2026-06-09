@@ -5,13 +5,12 @@
 """Build a GTFS mapping dict from a local GTFS zip file."""
 
 import hashlib
+import json
 import re
-from typing import Iterator
 import zipfile
 from io import BytesIO
 from pathlib import Path
-
-import json
+from typing import Iterator
 
 import polars as pl
 import tqdm
@@ -114,8 +113,7 @@ def build_mapping(zip_path: Path) -> dict:
             for route_data in routes.values():
                 for trip_data in route_data["trips"].values():
                     trip_data["stops"] = {
-                        sid: f"{sid} - {stop_names.get(sid, sid)}"
-                        for sid, _ in sorted(trip_data["stops"].items(), key=lambda x: x[1])
+                        sid: f"{sid} - {stop_names.get(sid, sid)}" for sid, _ in sorted(trip_data["stops"].items(), key=lambda x: x[1])
                     }
             bar.update(len(stop_names))
             bar.set_postfix_str(f"{len(stop_names)} stops")
@@ -146,14 +144,15 @@ def _ensure_cols(df: pl.DataFrame, cols_with_defaults: dict) -> pl.DataFrame:
     return df
 
 
-
 def _iterate_trips(trips_df: pl.DataFrame) -> Iterator[tuple[str, str, str]]:
-    df = trips_df.select(["trip_id", "route_id", "trip_headsign"]).with_columns([
+    df = trips_df.select(["trip_id", "route_id", "trip_headsign"]).with_columns(
+        [
             pl.col("trip_id").cast(pl.String),
             pl.col("route_id").cast(pl.String),
             pl.col("trip_headsign").fill_null("").cast(pl.String),
-        ])
-    
+        ]
+    )
+
     for trip_id, route_id, headsign in df.iter_rows():
         m = _TRIP_TIME_RE.search(trip_id)
         prefix = m.group(1) if m else trip_id.split("-")[0]
@@ -163,8 +162,10 @@ def _iterate_trips(trips_df: pl.DataFrame) -> Iterator[tuple[str, str, str]]:
 def _iterate_stop_times(data: pl.DataFrame) -> Iterator[tuple[str, str, int]]:
     if data.is_empty():
         return
-    
-    df = data.select(["trip_id", "stop_id", "stop_sequence"]).with_columns([pl.col("trip_id").cast(pl.String), pl.col("stop_id").cast(pl.String), pl.col("stop_sequence").cast(pl.Int64)])
+
+    df = data.select(["trip_id", "stop_id", "stop_sequence"]).with_columns(
+        [pl.col("trip_id").cast(pl.String), pl.col("stop_id").cast(pl.String), pl.col("stop_sequence").cast(pl.Int64)]
+    )
     for trip_id, stop_id, stop_sequence in df.iter_rows():
         yield trip_id, stop_id, stop_sequence
 

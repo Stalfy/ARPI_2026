@@ -10,8 +10,8 @@ import polars as pl
 from arpi.discovery.gtfs_mapping import (
     _ensure_cols,
     _find_entry,
-    _map_agency,
     _iterate_trips,
+    _map_agency,
     build_mapping,
     run,
 )
@@ -264,7 +264,6 @@ class TestBuildMapping:
 
         assert result["agency"] == {"STM": "STM Agency"}
 
-
     def test_stops_preserve_file_order_when_all_sequences_are_zero(self, tmp_path):
         agency_csv = "agency_id,agency_name\nRTL,RTL\n"
         routes_csv = "route_id,agency_id,route_short_name,route_long_name\n1,RTL,1,Line 1\n"
@@ -375,7 +374,9 @@ class TestRun:
         trips_csv = "route_id,service_id,trip_id,block_id,shape_id,trip_short_name,trip_headsign\n1,SVC1,T1,,,,Downtown\n"
         stop_times_csv = "trip_id,stop_id,stop_sequence\nT1,S1,1\n"
         stops_csv = "stop_id,stop_code,stop_name\nS1,001,Stop One\n"
-        zip_bytes = _make_zip({"agency.txt": agency_csv, "routes.txt": routes_csv, "trips.txt": trips_csv, "stop_times.txt": stop_times_csv, "stops.txt": stops_csv})
+        zip_bytes = _make_zip(
+            {"agency.txt": agency_csv, "routes.txt": routes_csv, "trips.txt": trips_csv, "stop_times.txt": stop_times_csv, "stops.txt": stops_csv}
+        )
         zip_path = tmp_path / "GTFS.zip"
         zip_path.write_bytes(zip_bytes)
         output_file = tmp_path / "mapping.json.zip"
@@ -408,4 +409,5 @@ class TestRun:
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

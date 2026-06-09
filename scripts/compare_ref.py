@@ -247,10 +247,7 @@ def compare(
     only_a = joined.filter(pl.col("error_sec_b").is_null()).height
     only_b = joined.filter(pl.col("error_sec").is_null()).height
 
-    matched = joined.filter(
-        pl.col("error_sec").is_not_null()
-        & pl.col("error_sec_b").is_not_null()
-    )
+    matched = joined.filter(pl.col("error_sec").is_not_null() & pl.col("error_sec_b").is_not_null())
 
     print(f"  only in {label_a}  : {only_a:,}")
     print(f"  only in {label_b}  : {only_b:,}")
@@ -269,28 +266,18 @@ def compare(
         f"/{matched.height:,}"
     )
 
-    acc_mismatch = matched.filter(
-        pl.col("is_accurate") != pl.col("is_accurate_b")
-    )
+    acc_mismatch = matched.filter(pl.col("is_accurate") != pl.col("is_accurate_b"))
 
     print(f"  is_accurate mismatches : {acc_mismatch.height:,}")
 
     if acc_mismatch.height:
-        print(
-            f"    {label_a}={int(matched['is_accurate'].sum()):,}  "
-            f"{label_b}={int(matched['is_accurate_b'].sum()):,}  "
-            "(on matched rows)"
-        )
+        print(f"    {label_a}={int(matched['is_accurate'].sum()):,}  " f"{label_b}={int(matched['is_accurate_b'].sum()):,}  " "(on matched rows)")
 
     if verbose:
         if only_a:
             rows = joined.filter(pl.col("error_sec_b").is_null()).head(5)
             print(f"\n  Only in {label_a} (first 5 of {only_a}):")
-            print(
-                rows.select(
-                    ["trip_id", "stop_id", "pred_time", "error_sec", "time_bucket"]
-                )
-            )
+            print(rows.select(["trip_id", "stop_id", "pred_time", "error_sec", "time_bucket"]))
 
         if only_b:
             rows = joined.filter(pl.col("error_sec").is_null()).head(5)
@@ -308,10 +295,7 @@ def compare(
             )
 
         if acc_mismatch.height:
-            print(
-                f"\n  is_accurate mismatches "
-                f"(first 5 of {acc_mismatch.height}):"
-            )
+            print(f"\n  is_accurate mismatches " f"(first 5 of {acc_mismatch.height}):")
             print(
                 acc_mismatch.head(5).select(
                     [
@@ -329,9 +313,7 @@ def compare(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Run analyzer variants on ref/ data"
-    )
+    parser = argparse.ArgumentParser(description="Run analyzer variants on ref/ data")
     parser.add_argument(
         "--no-cache",
         action="store_true",

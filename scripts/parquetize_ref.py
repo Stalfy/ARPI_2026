@@ -69,11 +69,7 @@ def process_one(day: date, data_type: str, no_cache: bool) -> str:
 
     folder_name = "trip_updates" if data_type == "trip_update" else "vehicle_positions"
     file_stem = "trip-updates" if data_type == "trip_update" else "vehicle-positions"
-    feed_type = (
-        FeedType.TRIP_UPDATES
-        if data_type == "trip_update"
-        else FeedType.VEHICLE_POSITIONS
-    )
+    feed_type = FeedType.TRIP_UPDATES if data_type == "trip_update" else FeedType.VEHICLE_POSITIONS
 
     pb_folder = REF / "GTFS-RT" / AGENCY / folder_name / yyyy / mm / dd
     out_dir = OUTPUT / AGENCY / f"{yyyy}-{mm}"
@@ -126,20 +122,13 @@ def main() -> None:
 
     days = iter_available_days()
 
-    tasks = [
-        (day, data_type, args.no_cache)
-        for day in days
-        for data_type in ("trip_update", "vehicle_position")
-    ]
+    tasks = [(day, data_type, args.no_cache) for day in days for data_type in ("trip_update", "vehicle_position")]
 
     print(f"Found {len(days)} day(s), {len(tasks)} parquetization task(s).")
     print(f"Running with {args.workers} worker process(es).")
 
     with ProcessPoolExecutor(max_workers=args.workers) as executor:
-        futures = [
-            executor.submit(process_one, day, data_type, no_cache)
-            for day, data_type, no_cache in tasks
-        ]
+        futures = [executor.submit(process_one, day, data_type, no_cache) for day, data_type, no_cache in tasks]
 
         for future in as_completed(futures):
             print(future.result())

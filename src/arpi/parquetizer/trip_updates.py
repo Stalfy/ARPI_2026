@@ -35,7 +35,6 @@ from arpi.models.transit import DelayUsingAgencies, FetchRequest, TimePeriod, Tr
 from .constants import TU_SCHEMA
 from .helpers import ProtoRow, attr, hf, parse_header, str_or_ts
 
-
 N_DEDUP_PARTITIONS = 256
 MAX_ROWS_PER_BATCH = 200_000
 TIMEZONE_NAME = "America/Toronto"
@@ -268,9 +267,7 @@ def build_raw_stop_update_row(
         "entity.is_deleted": entity.is_deleted,
         **parse_trip_descriptor(tu.trip),
         **parse_vehicle(tu),
-        "entity.trip_update.stop_time_update.stop_sequence": (
-            stu.stop_sequence if hf(stu, "stop_sequence") else None
-        ),
+        "entity.trip_update.stop_time_update.stop_sequence": (stu.stop_sequence if hf(stu, "stop_sequence") else None),
         "entity.trip_update.stop_time_update.stop_id": stu.stop_id or None,
         **parse_stop_time_event(stu, "arrival"),
         **parse_stop_time_event(stu, "departure"),
@@ -278,9 +275,7 @@ def build_raw_stop_update_row(
             stu,
             "departure_occupancy_status",
         ),
-        "entity.trip_update.stop_time_update.schedule_relationship": (
-            stu.schedule_relationship if hf(stu, "schedule_relationship") else None
-        ),
+        "entity.trip_update.stop_time_update.schedule_relationship": (stu.schedule_relationship if hf(stu, "schedule_relationship") else None),
         **parse_stop_time_properties(stu),
         "entity.trip_update.timestamp": tu.timestamp if hf(tu, "timestamp") else None,
         "entity.trip_update.delay": tu.delay if hf(tu, "delay") else None,
@@ -289,10 +284,7 @@ def build_raw_stop_update_row(
 
 
 def prefix_raw_row(raw_row: ProtoRow) -> dict[str, Any]:
-    return {
-        f"pb_feed_{column.replace('.', '_')}": raw_row.get(column)
-        for column in RAW_COLUMNS
-    }
+    return {f"pb_feed_{column.replace('.', '_')}": raw_row.get(column) for column in RAW_COLUMNS}
 
 
 def parse_file(path: Path) -> list[ProtoRow]:
@@ -426,24 +418,21 @@ def parse_feed_to_prediction_frame(
     if not rows:
         return pl.DataFrame()
 
-    return (
-        pl.DataFrame(rows)
-        .with_columns(
-            [
-                pl.col("route_id").cast(pl.Utf8),
-                pl.concat_str(
-                    [
-                        "trip_id",
-                        "stop_id",
-                        "pred_time_epoch",
-                        "pred_arrival_epoch",
-                    ],
-                    separator="|",
-                )
-                .hash(seed=0)
-                .alias("key_hash"),
-            ]
-        )
+    return pl.DataFrame(rows).with_columns(
+        [
+            pl.col("route_id").cast(pl.Utf8),
+            pl.concat_str(
+                [
+                    "trip_id",
+                    "stop_id",
+                    "pred_time_epoch",
+                    "pred_arrival_epoch",
+                ],
+                separator="|",
+            )
+            .hash(seed=0)
+            .alias("key_hash"),
+        ]
     )
 
 
@@ -459,11 +448,7 @@ def write_partitioned_narrow_wide_batch(
     write_batch_id: int,
     n_partitions: int,
 ) -> None:
-    df = df.with_columns(
-        (pl.col("key_hash") % n_partitions)
-        .cast(pl.UInt16)
-        .alias("_part")
-    )
+    df = df.with_columns((pl.col("key_hash") % n_partitions).cast(pl.UInt16).alias("_part"))
 
     narrow_cols = [
         "_row_id",
@@ -658,9 +643,7 @@ def deduplicate_partitions(
             *PB_FEED_COLUMNS,
         ]
 
-        final_part = final_part.select(
-            [col for col in ordered_cols if col in final_part.columns]
-        )
+        final_part = final_part.select([col for col in ordered_cols if col in final_part.columns])
 
         part_output = dedup_dir / f"deduped_part_{part_name}.parquet"
 
@@ -816,8 +799,7 @@ def parse_directory(
             return
 
         (
-            pl.scan_parquet(deduped_files)
-            .sink_parquet(
+            pl.scan_parquet(deduped_files).sink_parquet(
                 output_file,
                 compression=FINAL_COMPRESSION,
             )
@@ -826,11 +808,7 @@ def parse_directory(
         n_unique = pq.ParquetFile(output_file).metadata.num_rows
         skip_msg = f", {skipped} file(s) skipped" if skipped else ""
 
-        log(
-            f"{total_rows:,} predictions -> "
-            f"{n_unique:,} unique"
-            f"{skip_msg} -> {output_file}"
-        )
+        log(f"{total_rows:,} predictions -> " f"{n_unique:,} unique" f"{skip_msg} -> {output_file}")
 
     except Exception:
         err(f"\nError:\n{traceback.format_exc()}")
@@ -841,7 +819,4 @@ def parse_directory(
             if tmp_root.exists():
                 shutil.rmtree(tmp_root)
         except Exception:
-            err(
-                f"Failed to remove temporary directory {tmp_root}:\n"
-                f"{traceback.format_exc()}"
-            )
+            err(f"Failed to remove temporary directory {tmp_root}:\n" f"{traceback.format_exc()}")

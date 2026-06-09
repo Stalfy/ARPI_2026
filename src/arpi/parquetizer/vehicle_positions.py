@@ -24,7 +24,6 @@ from arpi.models.transit import FetchRequest, TimePeriod, TransitAgency
 from .constants import VP_SCHEMA
 from .helpers import ProtoRow, attr, hf, parse_header
 
-
 N_DEDUP_PARTITIONS = 256
 MAX_ROWS_PER_BATCH = 200_000
 
@@ -170,9 +169,7 @@ def build_raw_vehicle_row(
         **parse_trip_descriptor(vp),
         **parse_vehicle_descriptor(vp),
         **parse_position(vp),
-        "entity.vehicle.current_stop_sequence": (
-            vp.current_stop_sequence if hf(vp, "current_stop_sequence") else None
-        ),
+        "entity.vehicle.current_stop_sequence": (vp.current_stop_sequence if hf(vp, "current_stop_sequence") else None),
         "entity.vehicle.stop_id": vp.stop_id or None,
         "entity.vehicle.current_status": attr(vp, "current_status"),
         "entity.vehicle.timestamp": vp.timestamp if hf(vp, "timestamp") else None,
@@ -183,10 +180,7 @@ def build_raw_vehicle_row(
 
 
 def prefix_raw_row(raw_row: ProtoRow) -> dict[str, Any]:
-    return {
-        f"pb_feed_{column.replace('.', '_')}": raw_row.get(column)
-        for column in RAW_COLUMNS
-    }
+    return {f"pb_feed_{column.replace('.', '_')}": raw_row.get(column) for column in RAW_COLUMNS}
 
 
 def parse_file(path: Path) -> list[ProtoRow]:
@@ -259,10 +253,7 @@ def _analyze_stop_id_strategy(
     stop_seq = vp.current_stop_sequence if hf(vp, "current_stop_sequence") else None
 
     if trip_id and stop_seq is not None and not gtfs_stop_times.is_empty():
-        match = gtfs_stop_times.filter(
-            (pl.col("trip_id") == trip_id)
-            & (pl.col("stop_sequence") == stop_seq)
-        )
+        match = gtfs_stop_times.filter((pl.col("trip_id") == trip_id) & (pl.col("stop_sequence") == stop_seq))
 
         if match.height > 0 and "stop_id" in match.columns:
             logger.dbg("Stop ID strategy: FROM_STOPSEQUENCE")
@@ -319,19 +310,13 @@ def _load_gtfs_lookups(
 ]:
     if stop_id_strategy == StopIdStrategy.FROM_STOPSEQUENCE:
         stop_ids_lookup = parser.build_stop_id_lookup(gtfs_stop_times)
-        logger.dbg(
-            f"{fr.transit_agency}: stop_id lookup built "
-            f"({len(stop_ids_lookup)} entry(ies))."
-        )
+        logger.dbg(f"{fr.transit_agency}: stop_id lookup built " f"({len(stop_ids_lookup)} entry(ies)).")
         return stop_ids_lookup, None, None, None
 
     if stop_id_strategy == StopIdStrategy.FROM_VEHICLE_POSITION:
         return None, None, None, None
 
-    logger.inf(
-        f"{fr.transit_agency}: loading stops, trips and shape segments "
-        f"for strategy {stop_id_strategy}."
-    )
+    logger.inf(f"{fr.transit_agency}: loading stops, trips and shape segments " f"for strategy {stop_id_strategy}.")
 
     gtfs_stops = gtfs_fetcher.load_stops(fr.transit_agency)
     trips = gtfs_fetcher.load_trips(fr.transit_agency)
@@ -576,19 +561,16 @@ def parse_feed_to_actual_frame(
     if not rows:
         return pl.DataFrame()
 
-    return (
-        pl.DataFrame(rows)
-        .with_columns(
-            pl.concat_str(
-                [
-                    "trip_id",
-                    "stop_id",
-                ],
-                separator="|",
-            )
-            .hash(seed=0)
-            .alias("key_hash")
+    return pl.DataFrame(rows).with_columns(
+        pl.concat_str(
+            [
+                "trip_id",
+                "stop_id",
+            ],
+            separator="|",
         )
+        .hash(seed=0)
+        .alias("key_hash")
     )
 
 
@@ -604,11 +586,7 @@ def write_partitioned_narrow_wide_batch(
     write_batch_id: int,
     n_partitions: int,
 ) -> None:
-    df = df.with_columns(
-        (pl.col("key_hash") % n_partitions)
-        .cast(pl.UInt16)
-        .alias("_part")
-    )
+    df = df.with_columns((pl.col("key_hash") % n_partitions).cast(pl.UInt16).alias("_part"))
 
     narrow_cols = [
         "_row_id",
@@ -794,9 +772,7 @@ def deduplicate_partitions(
             "transit_agency",
         ]
 
-        final_part = final_part.select(
-            [col for col in ordered_cols if col in final_part.columns]
-        )
+        final_part = final_part.select([col for col in ordered_cols if col in final_part.columns])
 
         part_output = dedup_dir / f"deduped_part_{part_name}.parquet"
 
@@ -868,10 +844,7 @@ def parse_directory(
         logger=logger,
     )
 
-    log(
-        f"{fr.transit_agency}, {fr.time_period.start_time.date()}: "
-        f"using stop_id strategy {stop_id_strategy.value}."
-    )
+    log(f"{fr.transit_agency}, {fr.time_period.start_time.date()}: " f"using stop_id strategy {stop_id_strategy.value}.")
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -976,8 +949,7 @@ def parse_directory(
             return
 
         (
-            pl.scan_parquet(deduped_files)
-            .sink_parquet(
+            pl.scan_parquet(deduped_files).sink_parquet(
                 output_file,
                 compression=FINAL_COMPRESSION,
             )
@@ -986,11 +958,7 @@ def parse_directory(
         n_unique = pq.ParquetFile(output_file).metadata.num_rows
         skip_msg = f", {skipped} file(s) skipped" if skipped else ""
 
-        log(
-            f"{total_rows:,} vehicle positions -> "
-            f"{n_unique:,} unique actuals"
-            f"{skip_msg} -> {output_file}"
-        )
+        log(f"{total_rows:,} vehicle positions -> " f"{n_unique:,} unique actuals" f"{skip_msg} -> {output_file}")
 
     except Exception:
         err(f"\nError:\n{traceback.format_exc()}")
@@ -1001,7 +969,4 @@ def parse_directory(
             if tmp_root.exists():
                 shutil.rmtree(tmp_root)
         except Exception:
-            err(
-                f"Failed to remove temporary directory {tmp_root}:\n"
-                f"{traceback.format_exc()}"
-            )
+            err(f"Failed to remove temporary directory {tmp_root}:\n" f"{traceback.format_exc()}")

@@ -1,3 +1,5 @@
+# uv run python gtfs_realtime_reducer.py --gtfs ref/GTFS_ROUTE_4.zip --input ..\..\Downloads\Archive\arpi\ref\RTL_RAW_FEED_DATA.zip --output ref/GTFS-RT
+
 import argparse
 import zipfile
 from pathlib import Path
@@ -33,27 +35,30 @@ def should_keep(entity, ids: dict[str, set[str]]) -> bool:
     if entity.HasField("trip_update"):
         tu = entity.trip_update
 
-        if tu.trip.trip_id and tu.trip.trip_id in ids["trip_ids"]:
-            return True
+        if tu.trip.route_id and tu.trip.route_id not in ids["route_ids"]:
+            return False
 
-        if tu.trip.route_id and tu.trip.route_id in ids["route_ids"]:
-            return True
+        if tu.trip.trip_id and tu.trip.trip_id not in ids["trip_ids"]:
+            return False
 
-        for stu in tu.stop_time_update:
-            if stu.stop_id and stu.stop_id in ids["stop_ids"]:
-                return True
+        reduced_stu = [x for x in tu.stop_time_update if x.stop_id and x.stop_id in ids["stop_ids"]]
+        del tu.stop_time_update[:]
+        tu.stop_time_update.extend(reduced_stu)
+        return len(reduced_stu) > 0
 
     if entity.HasField("vehicle"):
         vp = entity.vehicle
 
-        if vp.trip.trip_id and vp.trip.trip_id in ids["trip_ids"]:
-            return True
+        if vp.trip.route_id and vp.trip.route_id not in ids["route_ids"]:
+            return False
 
-        if vp.trip.route_id and vp.trip.route_id in ids["route_ids"]:
-            return True
+        if vp.trip.trip_id and vp.trip.trip_id not in ids["trip_ids"]:
+            return False
 
-        if vp.stop_id and vp.stop_id in ids["stop_ids"]:
-            return True
+        if vp.stop_id and vp.stop_id not in ids["stop_ids"]:
+            return False
+
+        return True
 
     if entity.HasField("alert"):
         alert = entity.alert
@@ -177,9 +182,7 @@ def print_summary(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Reduce GTFS-RT protobuf feeds using trip/route/stop IDs from a GTFS.zip."
-    )
+    parser = argparse.ArgumentParser(description="Reduce GTFS-RT protobuf feeds using trip/route/stop IDs from a GTFS.zip.")
     parser.add_argument(
         "--gtfs",
         type=Path,
@@ -201,7 +204,6 @@ def main() -> None:
     args = parser.parse_args()
 
     ids = load_gtfs_ids(args.gtfs)
-
     print(f"Loaded {len(ids['trip_ids']):,} trip_id(s)")
     print(f"Loaded {len(ids['route_ids']):,} route_id(s)")
     print(f"Loaded {len(ids['stop_ids']):,} stop_id(s)")

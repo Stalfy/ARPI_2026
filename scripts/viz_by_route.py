@@ -115,8 +115,7 @@ def _load_trip_ids_for_route(output_dir_str: str, agency: str, route_id: str) ->
             trips = pl.read_csv(f, infer_schema_length=0)
 
     return (
-        trips
-        .filter(pl.col("route_id").cast(pl.String) == str(route_id))
+        trips.filter(pl.col("route_id").cast(pl.String) == str(route_id))
         .select(pl.col("trip_id").cast(pl.String))
         .unique()
         .get_column("trip_id")
@@ -145,9 +144,7 @@ def _route_filtered_scan(
     if not trip_ids:
         return scan.limit(0)
 
-    return scan.filter(
-        pl.col("trip_id").cast(pl.String).is_in(trip_ids)
-    )
+    return scan.filter(pl.col("trip_id").cast(pl.String).is_in(trip_ids))
 
 
 def _empty_chart_data() -> dict[str, pl.DataFrame]:
@@ -185,26 +182,16 @@ def _compute_chart_data(df: pl.DataFrame) -> dict[str, pl.DataFrame]:
     )
 
     route_overall = (
-        df.group_by("route_id")
-        .agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")])
-        .sort("accuracy", descending=True)
+        df.group_by("route_id").agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")]).sort("accuracy", descending=True)
     )
 
     route_bucket = df.group_by(["route_id", "time_bucket"]).agg(pl.col("is_accurate").mean().alias("accuracy"))
 
-    stop_overall = (
-        df.group_by("stop_id")
-        .agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")])
-        .sort("stop_id")
-    )
+    stop_overall = df.group_by("stop_id").agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")]).sort("stop_id")
 
     stop_bucket = df.group_by(["stop_id", "time_bucket"]).agg(pl.col("is_accurate").mean().alias("accuracy"))
 
-    hourly_overall = (
-        df_ts.group_by("hour")
-        .agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")])
-        .sort("hour")
-    )
+    hourly_overall = df_ts.group_by("hour").agg([pl.len().alias("n"), pl.col("is_accurate").mean().alias("accuracy")]).sort("hour")
 
     hourly_bucket = (
         df_ts.group_by(["hour", "time_bucket"])
@@ -271,12 +258,14 @@ def _load_stop_names(gtfs_zip_str: str) -> pl.DataFrame:
     with zipfile.ZipFile(gtfs_zip_str) as zf:
         with zf.open("stops.txt") as f:
             df = pl.read_csv(f, infer_schema_length=0)
-    return df.select([
-        pl.col("stop_id"),
-        pl.col("stop_name"),
-        pl.col("stop_lat").cast(pl.Float64),
-        pl.col("stop_lon").cast(pl.Float64),
-    ])
+    return df.select(
+        [
+            pl.col("stop_id"),
+            pl.col("stop_name"),
+            pl.col("stop_lat").cast(pl.Float64),
+            pl.col("stop_lon").cast(pl.Float64),
+        ]
+    )
 
 
 @st.cache_data
@@ -290,12 +279,14 @@ def _load_route_shapes(gtfs_zip_str: str) -> pl.DataFrame:
             trips = pl.read_csv(f, infer_schema_length=0).select(["route_id", "shape_id"])
 
         with zf.open("shapes.txt") as f:
-            shapes = pl.read_csv(f, infer_schema_length=0).select([
-                pl.col("shape_id"),
-                pl.col("shape_pt_lat").cast(pl.Float64),
-                pl.col("shape_pt_lon").cast(pl.Float64),
-                pl.col("shape_pt_sequence").cast(pl.Int64),
-            ])
+            shapes = pl.read_csv(f, infer_schema_length=0).select(
+                [
+                    pl.col("shape_id"),
+                    pl.col("shape_pt_lat").cast(pl.Float64),
+                    pl.col("shape_pt_lon").cast(pl.Float64),
+                    pl.col("shape_pt_sequence").cast(pl.Int64),
+                ]
+            )
 
     route_shape_map = (
         trips.filter(pl.col("shape_id").is_not_null() & (pl.col("shape_id") != ""))
@@ -309,10 +300,12 @@ def _load_route_shapes(gtfs_zip_str: str) -> pl.DataFrame:
     return (
         shapes.join(route_shape_map, on="shape_id", how="inner")
         .group_by("route_id")
-        .agg([
-            pl.col("shape_pt_lat").sort_by("shape_pt_sequence").alias("lats"),
-            pl.col("shape_pt_lon").sort_by("shape_pt_sequence").alias("lons"),
-        ])
+        .agg(
+            [
+                pl.col("shape_pt_lat").sort_by("shape_pt_sequence").alias("lats"),
+                pl.col("shape_pt_lon").sort_by("shape_pt_sequence").alias("lons"),
+            ]
+        )
     )
 
 
@@ -367,7 +360,8 @@ def _load_predictions_detail(output_dir_str: str, agency: str, date_str: str) ->
 
     tu_schema_cols = set(pl.scan_parquet(tu_path).collect_schema().names())
     tu_keep = [
-        c for c in [
+        c
+        for c in [
             "trip_id",
             "stop_id",
             "pred_time",
@@ -381,19 +375,22 @@ def _load_predictions_detail(output_dir_str: str, agency: str, date_str: str) ->
     tu = (
         pl.read_parquet(tu_path, columns=tu_keep)
         .unique(subset=["trip_id", "stop_id", "pred_time"], keep="first")
-        .rename({
-            k: v
-            for k, v in {
-                "pb_feed_entity_trip_update_vehicle_label": "vehicle_label",
-                "pb_feed_entity_trip_update_vehicle_id": "vehicle_id_tu",
-            }.items()
-            if k in tu_keep
-        })
+        .rename(
+            {
+                k: v
+                for k, v in {
+                    "pb_feed_entity_trip_update_vehicle_label": "vehicle_label",
+                    "pb_feed_entity_trip_update_vehicle_id": "vehicle_id_tu",
+                }.items()
+                if k in tu_keep
+            }
+        )
     )
 
     vp_schema_cols = set(pl.scan_parquet(vp_path).collect_schema().names())
     vp_keep = [
-        c for c in [
+        c
+        for c in [
             "trip_id",
             "stop_id",
             "actual_arrival",
@@ -403,16 +400,15 @@ def _load_predictions_detail(output_dir_str: str, agency: str, date_str: str) ->
         if c in vp_schema_cols
     ]
 
-    vp = (
-        pl.read_parquet(vp_path, columns=vp_keep)
-        .rename({
+    vp = pl.read_parquet(vp_path, columns=vp_keep).rename(
+        {
             k: v
             for k, v in {
                 "pb_feed_entity_vehicle_position_latitude": "vp_lat",
                 "pb_feed_entity_vehicle_position_longitude": "vp_lon",
             }.items()
             if k in vp_keep
-        })
+        }
     )
 
     df = analysis.join(tu, on=["trip_id", "stop_id", "pred_time"], how="left")
@@ -422,12 +418,14 @@ def _load_predictions_detail(output_dir_str: str, agency: str, date_str: str) ->
     if gtfs_zip.exists():
         with zipfile.ZipFile(str(gtfs_zip)) as zf:
             with zf.open("stops.txt") as f:
-                stops = pl.read_csv(f, infer_schema_length=0).select([
-                    pl.col("stop_id"),
-                    pl.col("stop_name"),
-                    pl.col("stop_lat").cast(pl.Float64),
-                    pl.col("stop_lon").cast(pl.Float64),
-                ])
+                stops = pl.read_csv(f, infer_schema_length=0).select(
+                    [
+                        pl.col("stop_id"),
+                        pl.col("stop_name"),
+                        pl.col("stop_lat").cast(pl.Float64),
+                        pl.col("stop_lon").cast(pl.Float64),
+                    ]
+                )
         df = df.join(stops, on="stop_id", how="left")
 
     _write_cache(cd, "predictions_detail", df)
@@ -451,8 +449,10 @@ def _build_benchmark_chart(error_sample: pl.DataFrame, bucket_stats: pl.DataFram
         return fig
 
     df = error_sample.with_columns(
-        pl.when(pl.col("is_accurate")).then(pl.lit("Précis"))
-        .when(pl.col("error_sec") > 0).then(pl.lit("Attente excessive"))
+        pl.when(pl.col("is_accurate"))
+        .then(pl.lit("Précis"))
+        .when(pl.col("error_sec") > 0)
+        .then(pl.lit("Attente excessive"))
         .otherwise(pl.lit("Manqué"))
         .alias("outcome")
     )
@@ -476,37 +476,51 @@ def _build_benchmark_chart(error_sample: pl.DataFrame, bucket_stats: pl.DataFram
             continue
 
         tta = subset["time_to_arrival_sec"].to_list()
-        customdata = list(zip(
-            [_fmt_sec(int(e)) for e in subset["error_sec"].to_list()],
-            subset["time_bucket"].to_list(),
-            [f"{int(t) // 60}m {int(t) % 60:02d}s" for t in tta],
-        ))
+        customdata = list(
+            zip(
+                [_fmt_sec(int(e)) for e in subset["error_sec"].to_list()],
+                subset["time_bucket"].to_list(),
+                [f"{int(t) // 60}m {int(t) % 60:02d}s" for t in tta],
+            )
+        )
 
-        fig.add_trace(go.Scatter(
-            x=tta,
-            y=subset["error_sec"].to_list(),
-            mode="markers",
-            name=outcome,
-            customdata=customdata,
-            hovertemplate=(
-                "<b>%{fullData.name}</b><br>"
-                "Erreur : %{customdata[0]}<br>"
-                "Temps avant arrivée : %{customdata[2]}<br>"
-                "Tranche : %{customdata[1]} min avant"
-                "<extra></extra>"
-            ),
-            marker=dict(color=color, size=6, opacity=0.55, line=dict(width=0)),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=tta,
+                y=subset["error_sec"].to_list(),
+                mode="markers",
+                name=outcome,
+                customdata=customdata,
+                hovertemplate=(
+                    "<b>%{fullData.name}</b><br>"
+                    "Erreur : %{customdata[0]}<br>"
+                    "Temps avant arrivée : %{customdata[2]}<br>"
+                    "Tranche : %{customdata[1]} min avant"
+                    "<extra></extra>"
+                ),
+                marker=dict(color=color, size=6, opacity=0.55, line=dict(width=0)),
+            )
+        )
 
     bstats = dict(zip(bucket_stats["time_bucket"].to_list(), bucket_stats["accuracy"].to_list()))
     for name, t_min, t_max, _, _ in _BUCKET_RANGES:
         mid = (t_min + t_max) / 2
         acc = bstats.get(name, 0)
-        fig.add_annotation(x=mid, y=-0.08, xref="x", yref="paper", text=f"<span style='color:#999;font-size:11px'>{name} min avant</span>", showarrow=False)
+        fig.add_annotation(
+            x=mid, y=-0.08, xref="x", yref="paper", text=f"<span style='color:#999;font-size:11px'>{name} min avant</span>", showarrow=False
+        )
         fig.add_annotation(x=mid, y=-0.18, xref="x", yref="paper", text=f"<b style='font-size:20px'>{acc:.0%}</b>", showarrow=False)
 
     overall = sum(bstats.get(b[0], 0) for b in _BUCKET_RANGES) / len(_BUCKET_RANGES)
-    fig.add_annotation(x=0.5, y=-0.29, xref="paper", yref="paper", text=f"<b>{overall:.1%}</b>  <span style='color:#999;font-size:13px'>global</span>", showarrow=False, font=dict(size=22))
+    fig.add_annotation(
+        x=0.5,
+        y=-0.29,
+        xref="paper",
+        yref="paper",
+        text=f"<b>{overall:.1%}</b>  <span style='color:#999;font-size:13px'>global</span>",
+        showarrow=False,
+        font=dict(size=22),
+    )
 
     y_ticks = list(range(-360, 361, 60))
     fig.update_layout(
@@ -537,7 +551,8 @@ def _build_benchmark_chart(error_sample: pl.DataFrame, bucket_stats: pl.DataFram
 
 st.set_page_config(page_title="ARPI Viz Benchmark", layout="wide")
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 [data-testid="stSidebar"] {
     background: #1D3C34;
@@ -601,7 +616,9 @@ hr { border: none; border-top: 1px solid #C4D9E4; margin: 1.5rem 0; }
 [data-testid="stDataFrame"] { border: 1px solid #C4D9E4; border-radius: 4px; overflow: hidden; }
 .stCaption, .stCaption p { color: #6D777A !important; font-size: 0.75rem; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 with st.sidebar:
@@ -655,14 +672,7 @@ if not path.exists():
 
 data = _load_chart_data(str(path))
 
-route_options = (
-    data["route_overall"]
-    .select(pl.col("route_id").cast(pl.String))
-    .unique()
-    .sort("route_id")
-    .get_column("route_id")
-    .to_list()
-)
+route_options = data["route_overall"].select(pl.col("route_id").cast(pl.String)).unique().sort("route_id").get_column("route_id").to_list()
 
 with st.sidebar:
     st.divider()
@@ -760,8 +770,7 @@ with tab_routes:
         available_buckets = [b for b in BUCKET_ORDER if b in pivot.columns]
 
         route_table = (
-            route_overall
-            .join(pivot.select(["route_id"] + available_buckets), on="route_id", how="left")
+            route_overall.join(pivot.select(["route_id"] + available_buckets), on="route_id", how="left")
             .with_columns(pl.col("route_id").cast(pl.Int64, strict=False).alias("_sort_key"))
             .sort("_sort_key")
             .drop("_sort_key")
@@ -827,10 +836,7 @@ with tab_routes:
                     st_folium(fmap, width="100%", height=520, returned_objects=[], key=f"routes_map_{layer_choice}_{selected_route_id}")
                     st.divider()
 
-        bucket_col_config = {
-            b: st.column_config.ProgressColumn(f"{b} min", format="%.0f%%", min_value=0, max_value=100)
-            for b in available_buckets
-        }
+        bucket_col_config = {b: st.column_config.ProgressColumn(f"{b} min", format="%.0f%%", min_value=0, max_value=100) for b in available_buckets}
 
         _render_paginated_dataframe(
             route_table_pct,
@@ -853,8 +859,7 @@ with tab_stops:
         available_stop_buckets = [b for b in BUCKET_ORDER if b in stop_pivot.columns]
 
         stop_table = (
-            stop_overall
-            .join(stop_pivot.select(["stop_id"] + available_stop_buckets), on="stop_id", how="left")
+            stop_overall.join(stop_pivot.select(["stop_id"] + available_stop_buckets), on="stop_id", how="left")
             .with_columns(pl.col("stop_id").cast(pl.Int64, strict=False).alias("_sort_key"))
             .sort("_sort_key")
             .drop("_sort_key")
@@ -866,10 +871,8 @@ with tab_stops:
         gtfs_zip = output_dir / agency / "GTFS.zip"
         if gtfs_zip.exists():
             stops_meta = _load_stop_names(str(gtfs_zip))
-            stop_table_pct = (
-                stop_table_pct
-                .join(stops_meta, on="stop_id", how="left")
-                .select(["stop_id", "stop_name", "stop_lat", "stop_lon", "n", "accuracy"] + available_stop_buckets)
+            stop_table_pct = stop_table_pct.join(stops_meta, on="stop_id", how="left").select(
+                ["stop_id", "stop_name", "stop_lat", "stop_lon", "n", "accuracy"] + available_stop_buckets
             )
 
             map_df = stop_table_pct.drop_nulls(subset=["stop_lat", "stop_lon"]).to_pandas()
@@ -926,8 +929,7 @@ with tab_stops:
             table_df = stop_table_pct
 
         stop_bucket_col_config = {
-            b: st.column_config.ProgressColumn(f"{b} min", format="%.0f%%", min_value=0, max_value=100)
-            for b in available_stop_buckets
+            b: st.column_config.ProgressColumn(f"{b} min", format="%.0f%%", min_value=0, max_value=100) for b in available_stop_buckets
         }
 
         _render_paginated_dataframe(
@@ -1045,7 +1047,8 @@ with tab_predictions:
         st.divider()
 
         display_cols = [
-            c for c in [
+            c
+            for c in [
                 "route_id",
                 "trip_id",
                 "stop_id",
@@ -1201,7 +1204,9 @@ with tab_vp_raw:
             vp_start = (vp_page - 1) * vp_page_size
             vp_raw = vp_scan.slice(vp_start, vp_page_size).collect()
 
-            st.caption(f"Page {vp_page}/{total_vp_pages} · {vp_start + 1:,}–{min(vp_start + vp_page_size, total_vp_rows):,} sur {total_vp_rows:,} lignes")
+            st.caption(
+                f"Page {vp_page}/{total_vp_pages} · {vp_start + 1:,}–{min(vp_start + vp_page_size, total_vp_rows):,} sur {total_vp_rows:,} lignes"
+            )
 
             lat_col = "pb_feed_entity_vehicle_position_latitude"
             lon_col = "pb_feed_entity_vehicle_position_longitude"
@@ -1256,5 +1261,6 @@ with tab_tu_raw:
             tu_raw = tu_scan.slice(tu_start, tu_page_size).collect()
 
             st.dataframe(tu_raw.to_pandas(), width="stretch", hide_index=True)
-            st.caption(f"Page {tu_page}/{total_tu_pages} · {tu_start + 1:,}–{min(tu_start + tu_page_size, total_tu_rows):,} sur {total_tu_rows:,} lignes")
-            
+            st.caption(
+                f"Page {tu_page}/{total_tu_pages} · {tu_start + 1:,}–{min(tu_start + tu_page_size, total_tu_rows):,} sur {total_tu_rows:,} lignes"
+            )

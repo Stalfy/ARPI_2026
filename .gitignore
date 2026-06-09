@@ -1,6 +1,8 @@
 raw.tar.gz
 ref
 .devops
+travel_times.csv
+travel_times.parquet
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
