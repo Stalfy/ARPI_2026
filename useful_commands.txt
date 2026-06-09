@@ -1,0 +1,1 @@
+uv run python reduce_gtfs_rt.py --gtfs ref/GTFS_ROUTE_4.zip --input ..\..\Downloads\Archive\arpi\ref\RTL_RAW_FEED_DATA.zip --output ref/GTFS-RT
