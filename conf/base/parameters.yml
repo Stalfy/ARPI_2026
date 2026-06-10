@@ -1,0 +1,23 @@
+A_agency_filtering_force: false
+A_agency_filtering_input: data/A_agency_filtering/RAW_FEED_DATA.zip
+A_agency_filtering_output: data/B_date_filtering/AGENCY_DATA.zip
+A_agency_filtering_agencies:
+  - RTL
+
+B_date_filtering_force: false
+B_date_filtering_output: data/C_feed_file_sync/DATE_BOUND_DATA.zip
+B_date_filtering_start_date: "2026-05-12"
+B_date_filtering_end_date: "2026-05-25"
+
+C_feed_file_sync_force: false
+C_feed_file_sync_output: data/C_feed_file_sync/feed_file_sync.csv.zip
+C_feed_file_sync_lag_seconds: 10
+
+D_route_filtering_force: false
+D_route_filtering_output: data/D_route_filtering/ROUTE_DATA.zip
+D_route_filtering_agency: RTL
+D_route_filtering_route_ids:
+  - "4"
+
+E_frame_creation_force: false
+E_frame_creation_output: data/E_frame_creation/dataset.csv.zip

@@ -7,12 +7,15 @@
     version         = "0.1.0"
     description     = "Add your description here"
     readme          = "README.md"
-    requires-python = ">=3.13"
+    requires-python = ">=3.13,<3.14"
     dependencies    = [
     "black>=26.5.1",
     "duckdb>=1.5.3",
     "folium>=0.20.0",
     "gtfs-realtime-bindings>=2.0.0",
+    "kedro>=1.4.0",
+    "kedro-datasets[matplotlib-matplotlibdataset,pandas-csvdataset,pandas-exceldataset,pandas-jsondataset,pandas-parquetdataset,pandas-plotlydataset]>=9.4.0",
+    "kedro-viz>=12.4.0",
     "plotly>=6.1.2",
     "polars>=1.41.1",
     "pyarrow>=24.0.0",
@@ -44,3 +47,14 @@
 [tool.flake8]
     max-line-length = 148
     exclude         = [".venv", "__pycache__", ".git"]
+
+[tool.kedro]
+    package_name = "arpi"
+    project_name = "arpi"
+    kedro_init_version = "1.4.0"
+    tools = "['Custom Logging', 'Data Structure']"
+    example_pipeline = "True"
+    source_dir = "src"
+
+[tool.kedro_telemetry]
+    project_id = "bc66b7bfb0e14df3b6f0daa88e85ffb6"

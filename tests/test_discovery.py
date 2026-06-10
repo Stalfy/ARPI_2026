@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from arpi.discovery import (
+from apex_transit_arpi.discovery import (
     _iter_date_dirs_desc,
     _iter_discovery_roots,
     iter_day_dirs,

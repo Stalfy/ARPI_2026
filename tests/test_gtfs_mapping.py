@@ -7,7 +7,7 @@ import zipfile
 
 import polars as pl
 
-from arpi.discovery.gtfs_mapping import (
+from apex_transit_arpi.discovery.gtfs_mapping import (
     _ensure_cols,
     _find_entry,
     _iterate_trips,

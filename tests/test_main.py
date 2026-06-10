@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import polars as pl
 
-from arpi.main import _diff_day, _step_legacy, _zip_gtfs
+from apex_transit_arpi.main import _diff_day, _step_legacy, _zip_gtfs
 
 
 class TestZipGtfs:
@@ -130,7 +130,7 @@ def _make_orchestrator(status, df: pl.DataFrame | None = None):
 
 class TestStepLegacy:
     def test_always_writes_file_on_skip(self, tmp_path):
-        from arpi.analyzer import DailyAnalysisStatus
+        from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
         out = tmp_path / "out.parquet"
         result = _step_legacy(_make_orchestrator(DailyAnalysisStatus.SKIP), None, date(2024, 1, 1), out)
@@ -140,7 +140,7 @@ class TestStepLegacy:
         assert pl.read_parquet(out).is_empty()
 
     def test_always_writes_file_on_fail(self, tmp_path):
-        from arpi.analyzer import DailyAnalysisStatus
+        from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
         out = tmp_path / "out.parquet"
         result = _step_legacy(_make_orchestrator(DailyAnalysisStatus.FAIL), None, date(2024, 1, 1), out)
@@ -161,7 +161,7 @@ class TestStepLegacy:
         assert pl.read_parquet(out).is_empty()
 
     def test_writes_data_on_success(self, tmp_path):
-        from arpi.analyzer import DailyAnalysisStatus
+        from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
         data = _make_analysis_df(3)
         out = tmp_path / "out.parquet"
@@ -172,7 +172,7 @@ class TestStepLegacy:
         assert pl.read_parquet(out).height == 3
 
     def test_skips_if_output_already_exists(self, tmp_path):
-        from arpi.analyzer import DailyAnalysisStatus
+        from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
         out = tmp_path / "out.parquet"
         _make_analysis_df(1).write_parquet(out)
