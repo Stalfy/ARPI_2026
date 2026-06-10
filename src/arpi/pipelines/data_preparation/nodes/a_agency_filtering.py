@@ -5,7 +5,8 @@ import os
 import pathlib
 import shutil
 from pathlib import PurePosixPath
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)

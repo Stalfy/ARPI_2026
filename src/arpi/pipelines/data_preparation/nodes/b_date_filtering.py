@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import logging
 import pathlib
 import shutil
 from datetime import date
 from pathlib import PurePosixPath
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
-import logging
+
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
