@@ -64,7 +64,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "input_zip_path": "route_filtered_zip",
                     "matches_zip_path": "synced_feed_files_zip",
                     "output_zip_path": "params:E_frame_creation_output",
-                    "force": "params:E_frame_creation_force"
+                    "force": "params:E_frame_creation_force",
                 },
                 outputs="travel_data_zip",
                 name="generate_travel_data",
