@@ -13,7 +13,6 @@ import streamlit as st
 from branca.colormap import LinearColormap
 from streamlit_folium import st_folium
 
-
 COL = {
     "agency": "gtfs_agency",
     "service_date": "gtfs_service_date",
@@ -82,15 +81,17 @@ def load_csv(path: str) -> pl.DataFrame:
         },
     )
 
-    return df.with_columns([
-        pl.col(COL["travel_time"]).cast(pl.Int64, strict=False),
-        pl.col(COL["from_lat"]).cast(pl.Float64, strict=False),
-        pl.col(COL["from_lon"]).cast(pl.Float64, strict=False),
-        pl.col(COL["to_lat"]).cast(pl.Float64, strict=False),
-        pl.col(COL["to_lon"]).cast(pl.Float64, strict=False),
-        pl.col(COL["stop_lat"]).cast(pl.Float64, strict=False),
-        pl.col(COL["stop_lon"]).cast(pl.Float64, strict=False),
-    ])
+    return df.with_columns(
+        [
+            pl.col(COL["travel_time"]).cast(pl.Int64, strict=False),
+            pl.col(COL["from_lat"]).cast(pl.Float64, strict=False),
+            pl.col(COL["from_lon"]).cast(pl.Float64, strict=False),
+            pl.col(COL["to_lat"]).cast(pl.Float64, strict=False),
+            pl.col(COL["to_lon"]).cast(pl.Float64, strict=False),
+            pl.col(COL["stop_lat"]).cast(pl.Float64, strict=False),
+            pl.col(COL["stop_lon"]).cast(pl.Float64, strict=False),
+        ]
+    )
 
 
 @st.cache_data
@@ -99,15 +100,14 @@ def load_gtfs_shapes(gtfs_zip: str) -> pl.DataFrame:
         with zf.open("shapes.txt") as f:
             shapes = pl.read_csv(f, infer_schema_length=0)
 
-    return (
-        shapes.select([
+    return shapes.select(
+        [
             pl.col("shape_id").cast(pl.String).alias("shape"),
             pl.col("shape_pt_lat").cast(pl.Float64),
             pl.col("shape_pt_lon").cast(pl.Float64),
             pl.col("shape_pt_sequence").cast(pl.Int64),
-        ])
-        .sort(["shape", "shape_pt_sequence"])
-    )
+        ]
+    ).sort(["shape", "shape_pt_sequence"])
 
 
 def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
@@ -146,32 +146,38 @@ def apply_filters(df: pl.DataFrame) -> pl.DataFrame:
 
 def summarize_worst_segments(df: pl.DataFrame, min_obs: int) -> pl.DataFrame:
     return (
-        df.drop_nulls([
-            COL["route"],
-            COL["shape"],
-            COL["from_lat"],
-            COL["from_lon"],
-            COL["to_lat"],
-            COL["to_lon"],
-            COL["travel_time"],
-        ])
-        .group_by([
-            COL["route"],
-            COL["shape"],
-            COL["from_lat"],
-            COL["from_lon"],
-            COL["to_lat"],
-            COL["to_lon"],
-        ])
-        .agg([
-            pl.len().alias("observations"),
-            pl.col(COL["travel_time"]).mean().round(2).alias("avg_sec"),
-            pl.col(COL["travel_time"]).median().round(2).alias("median_sec"),
-            pl.col(COL["travel_time"]).quantile(0.95).round(2).alias("p95_sec"),
-            pl.col(COL["travel_time"]).max().alias("max_sec"),
-            pl.col(COL["stop_id"]).drop_nulls().first().alias(COL["stop_id"]),
-            pl.col(COL["stop_name"]).drop_nulls().first().alias(COL["stop_name"]),
-        ])
+        df.drop_nulls(
+            [
+                COL["route"],
+                COL["shape"],
+                COL["from_lat"],
+                COL["from_lon"],
+                COL["to_lat"],
+                COL["to_lon"],
+                COL["travel_time"],
+            ]
+        )
+        .group_by(
+            [
+                COL["route"],
+                COL["shape"],
+                COL["from_lat"],
+                COL["from_lon"],
+                COL["to_lat"],
+                COL["to_lon"],
+            ]
+        )
+        .agg(
+            [
+                pl.len().alias("observations"),
+                pl.col(COL["travel_time"]).mean().round(2).alias("avg_sec"),
+                pl.col(COL["travel_time"]).median().round(2).alias("median_sec"),
+                pl.col(COL["travel_time"]).quantile(0.95).round(2).alias("p95_sec"),
+                pl.col(COL["travel_time"]).max().alias("max_sec"),
+                pl.col(COL["stop_id"]).drop_nulls().first().alias(COL["stop_id"]),
+                pl.col(COL["stop_name"]).drop_nulls().first().alias(COL["stop_name"]),
+            ]
+        )
         .filter(pl.col("observations") >= min_obs)
         .sort(["p95_sec", "avg_sec"], descending=True)
     )
@@ -281,9 +287,7 @@ def render_selected_segment(row: dict, scale_df: pl.DataFrame) -> None:
         fill_opacity=0.85,
         tooltip="Previous VP",
         popup=folium.Popup(
-            f"<b>Previous VP</b><br>"
-            f"{row[COL['from_lat']]}, {row[COL['from_lon']]}<br>"
-            f"{row.get(COL['from_ts'])}",
+            f"<b>Previous VP</b><br>" f"{row[COL['from_lat']]}, {row[COL['from_lon']]}<br>" f"{row.get(COL['from_ts'])}",
             max_width=350,
         ),
     ).add_to(fmap)
@@ -363,10 +367,7 @@ def render_clickable_table(df: pl.DataFrame) -> None:
 
     display_cols = [c for c in display_cols if c in df.columns]
 
-    table_df = (
-        df.select(display_cols)
-        .sort([COL["route"], COL["trip"], COL["shape"], COL["from_ts"]])
-    )
+    table_df = df.select(display_cols).sort([COL["route"], COL["trip"], COL["shape"], COL["from_ts"]])
 
     event = st.dataframe(
         table_df.to_pandas(),
@@ -486,11 +487,13 @@ def main() -> None:
 
     render_metrics(filtered, worst)
 
-    tab_worst, tab_table, tab_raw = st.tabs([
-        "Worst road segments",
-        "Clickable segment table",
-        "Raw data",
-    ])
+    tab_worst, tab_table, tab_raw = st.tabs(
+        [
+            "Worst road segments",
+            "Clickable segment table",
+            "Raw data",
+        ]
+    )
 
     with tab_worst:
         render_worst_segments_map(worst, shapes)

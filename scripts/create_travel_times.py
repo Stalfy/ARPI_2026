@@ -253,7 +253,7 @@ def iter_vehicle_position_entries(rt_zip: Path, gtfs_agency: str | None):
                     "vehicle_label": vp.vehicle.label if vp.HasField("vehicle") else None,
                     "latitude": vp.position.latitude,
                     "longitude": vp.position.longitude,
-                    "feed_header_timestamp": feed_ts
+                    "feed_header_timestamp": feed_ts,
                 }
 
 
@@ -302,8 +302,8 @@ def build_segment(
         "gtfs_next_stop_longitude": upcoming_stop.get("longitude"),
         "gtfsrt_vp_entity_id": cur["entity_id"],
         "gtfsrt_vp_trip_route_id": cur.get("route_id"),
-        "gtfsrt_feed_header_timestamp_previous": prev.get("feed_header_timestamp") ,
-        "gtfsrt_feed_header_timestamp_current": cur.get("feed_header_timestamp") ,
+        "gtfsrt_feed_header_timestamp_previous": prev.get("feed_header_timestamp"),
+        "gtfsrt_feed_header_timestamp_current": cur.get("feed_header_timestamp"),
         "gtfs_rt_file_previous": prev["source_file"],
         "gtfs_rt_file_current": cur["source_file"],
     }
