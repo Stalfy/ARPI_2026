@@ -3,6 +3,7 @@ ref
 .devops
 travel_times.csv
 travel_times.parquet
+.viz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
