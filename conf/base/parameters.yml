@@ -19,5 +19,5 @@ D_route_filtering_agency: RTL
 D_route_filtering_route_ids:
   - "4"
 
-E_frame_creation_force: true
+E_frame_creation_force: false
 E_frame_creation_output: data/E_frame_creation/dataset.csv.zip
