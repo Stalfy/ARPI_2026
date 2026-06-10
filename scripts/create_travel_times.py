@@ -44,6 +44,8 @@ OUT_FIELDS = [
     "gtfs_next_stop_longitude",
     "gtfsrt_vp_entity_id",
     "gtfsrt_vp_trip_route_id",
+    "gtfsrt_feed_header_timestamp_previous",
+    "gtfsrt_feed_header_timestamp_current",
     "gtfs_rt_file_previous",
     "gtfs_rt_file_current",
 ]
@@ -132,13 +134,13 @@ def load_stop_time_lookup(gtfs_zip: Path) -> dict[str, list[dict]]:
 
         item = {
             "arrival_sec": arrival_sec,
-            "gtfs_next_stop_id": stop_id,
-            "gtfs_next_stop_name": stop.get("stop_name"),
-            "gtfs_next_stop_arrival_time": row["arrival_time"],
-            "gtfs_next_stop_departure_time": row["departure_time"],
-            "gtfs_next_stop_sequence_number": row["stop_sequence"],
-            "gtfs_next_stop_latitude": stop.get("stop_lat"),
-            "gtfs_next_stop_longitude": stop.get("stop_lon"),
+            "stop_id": stop_id,
+            "stop_name": stop.get("stop_name"),
+            "arrival_time": row["arrival_time"],
+            "departure_time": row["departure_time"],
+            "sequence_number": row["stop_sequence"],
+            "latitude": stop.get("stop_lat"),
+            "longitude": stop.get("stop_lon"),
         }
 
         lookup.setdefault(row["trip_id"], []).append(item)
@@ -241,16 +243,17 @@ def iter_vehicle_position_entries(rt_zip: Path, gtfs_agency: str | None):
 
                 yield {
                     "source_file": info.filename,
-                    "gtfs_agency": agency_name,
-                    "gtfs_service_date": gtfs_service_date,
-                    "gtfsrt_vp_entity_id": entity.id,
-                    "gtfs_trip_id": trip_id,
-                    "gtfsrt_vp_trip_route_id": route_id or None,
+                    "agency": agency_name,
+                    "service_date": gtfs_service_date,
+                    "entity_id": entity.id,
+                    "trip_id": trip_id,
+                    "route_id": route_id or None,
                     "timestamp": datetime.fromtimestamp(ts, tz=timezone.utc),
-                    "gtfsrt_vp_vehicle_id": vp.vehicle.id if vp.HasField("vehicle") else None,
-                    "gtfsrt_vp_vehicle_label": vp.vehicle.label if vp.HasField("vehicle") else None,
+                    "vehicle_id": vp.vehicle.id if vp.HasField("vehicle") else None,
+                    "vehicle_label": vp.vehicle.label if vp.HasField("vehicle") else None,
                     "latitude": vp.position.latitude,
                     "longitude": vp.position.longitude,
+                    "feed_header_timestamp": feed_ts
                 }
 
 
@@ -265,15 +268,15 @@ def build_segment(
     if max_segment_seconds is not None and travel_time > max_segment_seconds:
         return None
 
-    trip_id = cur["gtfs_trip_id"]
+    trip_id = cur["trip_id"]
     trip_def = trip_lookup.get(trip_id, {})
-    local_sec = local_seconds_since_service_midnight(cur["timestamp"], cur["gtfs_service_date"], agency_tz)
+    local_sec = local_seconds_since_service_midnight(cur["timestamp"], cur["service_date"], agency_tz)
     upcoming_stop = find_upcoming_stop(stop_lookup, trip_id, local_sec)
-    gtfs_route_id = trip_def.get("route_id") or cur.get("gtfsrt_vp_trip_route_id")
+    gtfs_route_id = trip_def.get("route_id") or cur.get("route_id")
 
     return {
-        "gtfs_agency": cur["gtfs_agency"],
-        "gtfs_service_date": cur["gtfs_service_date"],
+        "gtfs_agency": cur["agency"],
+        "gtfs_service_date": cur["service_date"],
         "gtfs_route_id": gtfs_route_id,
         "gtfs_trip_id": trip_id,
         "gtfs_shape_id": trip_def.get("shape_id"),
@@ -281,8 +284,8 @@ def build_segment(
         "gtfs_trip_headsign": trip_def.get("trip_headsign"),
         "gtfs_direction_id": trip_def.get("direction_id"),
         "gtfs_block_id": trip_def.get("block_id"),
-        "gtfsrt_vp_vehicle_id": cur["gtfsrt_vp_vehicle_id"],
-        "gtfsrt_vp_vehicle_label": cur["gtfsrt_vp_vehicle_label"],
+        "gtfsrt_vp_vehicle_id": cur["vehicle_id"],
+        "gtfsrt_vp_vehicle_label": cur["vehicle_label"],
         "travel_time_seconds": travel_time,
         "gtfsrt_vp_position_timestamp_previous": utc_iso(prev["timestamp"]),
         "gtfsrt_vp_position_latitude_previous": prev["latitude"],
@@ -290,15 +293,17 @@ def build_segment(
         "gtfsrt_vp_position_timestamp_current": utc_iso(cur["timestamp"]),
         "gtfsrt_vp_position_latitude_current": cur["latitude"],
         "gtfsrt_vp_position_longitude_current": cur["longitude"],
-        "gtfs_next_stop_sequence_number": upcoming_stop.get("gtfs_next_stop_sequence_number"),
-        "gtfs_next_stop_id": upcoming_stop.get("gtfs_next_stop_id"),
-        "gtfs_next_stop_name": upcoming_stop.get("gtfs_next_stop_name"),
-        "gtfs_next_stop_arrival_time": gtfs_time_to_iso(cur["gtfs_service_date"], upcoming_stop.get("gtfs_next_stop_arrival_time"), agency_tz),
-        "gtfs_next_stop_departure_time": gtfs_time_to_iso(cur["gtfs_service_date"], upcoming_stop.get("gtfs_next_stop_departure_time"), agency_tz),
-        "gtfs_next_stop_latitude": upcoming_stop.get("gtfs_next_stop_latitude"),
-        "gtfs_next_stop_longitude": upcoming_stop.get("gtfs_next_stop_longitude"),
-        "gtfsrt_vp_entity_id": cur["gtfsrt_vp_entity_id"],
-        "gtfsrt_vp_trip_route_id": cur.get("gtfsrt_vp_trip_route_id"),
+        "gtfs_next_stop_sequence_number": upcoming_stop.get("sequence_number"),
+        "gtfs_next_stop_id": upcoming_stop.get("stop_id"),
+        "gtfs_next_stop_name": upcoming_stop.get("stop_name"),
+        "gtfs_next_stop_arrival_time": gtfs_time_to_iso(cur["service_date"], upcoming_stop.get("arrival_time"), agency_tz),
+        "gtfs_next_stop_departure_time": gtfs_time_to_iso(cur["service_date"], upcoming_stop.get("departure_time"), agency_tz),
+        "gtfs_next_stop_latitude": upcoming_stop.get("latitude"),
+        "gtfs_next_stop_longitude": upcoming_stop.get("longitude"),
+        "gtfsrt_vp_entity_id": cur["entity_id"],
+        "gtfsrt_vp_trip_route_id": cur.get("route_id"),
+        "gtfsrt_feed_header_timestamp_previous": prev.get("feed_header_timestamp") ,
+        "gtfsrt_feed_header_timestamp_current": cur.get("feed_header_timestamp") ,
         "gtfs_rt_file_previous": prev["source_file"],
         "gtfs_rt_file_current": cur["source_file"],
     }
@@ -324,18 +329,18 @@ def stream_segments(
         writer.writeheader()
 
         for cur in iter_vehicle_position_entries(gtfs_rt_zip, gtfs_agency):
-            trip_id = cur["gtfs_trip_id"]
+            trip_id = cur["trip_id"]
             trip_def = trip_lookup.get(trip_id, {})
 
-            gtfs_route_id = trip_def.get("route_id") or cur.get("gtfsrt_vp_trip_route_id")
+            gtfs_route_id = trip_def.get("route_id") or cur.get("route_id")
             gtfs_shape_id = trip_def.get("shape_id")
 
             key = (
                 gtfs_route_id,
                 trip_id,
                 gtfs_shape_id,
-                cur["gtfs_service_date"],
-                cur.get("gtfsrt_vp_vehicle_id"),
+                cur["service_date"],
+                cur.get("vehicle_id"),
             )
 
             prev = last_seen.get(key)
@@ -364,7 +369,7 @@ def main() -> None:
     parser.add_argument("--gtfs-rt", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--agency", type=str, default=None)
-    parser.add_argument("--max-segment-seconds", type=int, default=1300)
+    parser.add_argument("--max-segment-seconds", type=int, default=7200)
     args = parser.parse_args()
 
     agency_timezone = load_agency_timezone(args.gtfs)
