@@ -16,6 +16,7 @@
     "kedro>=1.4.0",
     "kedro-datasets[matplotlib-matplotlibdataset,pandas-csvdataset,pandas-exceldataset,pandas-jsondataset,pandas-parquetdataset,pandas-plotlydataset]>=9.4.0",
     "kedro-viz>=12.4.0",
+    "matplotlib>=3.10.9",
     "plotly>=6.1.2",
     "polars>=1.41.1",
     "pyarrow>=24.0.0",
