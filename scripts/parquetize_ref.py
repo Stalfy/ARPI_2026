@@ -14,11 +14,11 @@ from pathlib import Path
 
 import polars as pl
 
-from arpi import parquetizer
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.rt_parser import GtfsRtParser
-from arpi.models.transit import FeedType, FetchRequest, TimePeriod, TransitAgency
+from apex_transit_arpi import parquetizer
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.rt_parser import GtfsRtParser
+from apex_transit_arpi.models.transit import FeedType, FetchRequest, TimePeriod, TransitAgency
 
 REF = Path(__file__).parent.parent / "ref"
 OUTPUT = REF / "output"

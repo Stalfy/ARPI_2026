@@ -9,8 +9,8 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
-from arpi.models.analysis import AnalysisJob, AnalysisResult
-from arpi.models.transit import TransitAgency
+from apex_transit_arpi.models.analysis import AnalysisJob, AnalysisResult
+from apex_transit_arpi.models.transit import TransitAgency
 
 
 class AdditionalJobsName(StrEnum):

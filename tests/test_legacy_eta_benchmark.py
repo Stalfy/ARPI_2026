@@ -8,10 +8,10 @@ from unittest.mock import MagicMock
 import polars as pl
 from google.transit import gtfs_realtime_pb2
 
-from arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
-from arpi.analyzer.eta_benchmark_analysis.benchmark_builder import build as benchmark_build
-from arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
-from arpi.models.transit import FeedType, TimePeriod, TransitAgency
+from apex_transit_arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
+from apex_transit_arpi.analyzer.eta_benchmark_analysis.benchmark_builder import build as benchmark_build
+from apex_transit_arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
+from apex_transit_arpi.models.transit import FeedType, TimePeriod, TransitAgency
 
 # ── epoch constants ────────────────────────────────────────────────────────────
 # 2024-01-15 15:00:00 UTC  ==  2024-01-15 10:00:00 EST (Toronto, naive)
@@ -289,8 +289,8 @@ def test_process_trip_updates_deduplication(tmp_path):
 
 def test_duckdb_refactor_matches_threadpool_single_file(tmp_path):
     """DuckDB implementation produces bit-for-bit identical output to the original thread-pool version (single file)."""
-    from arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceBak
-    from arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceZero
+    from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceBak
+    from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceZero
 
     def _make_mocks():
         file_client = MagicMock()
@@ -335,8 +335,8 @@ def test_duckdb_refactor_matches_threadpool_single_file(tmp_path):
 
 def test_duckdb_refactor_matches_threadpool_with_deduplication(tmp_path):
     """DuckDB implementation produces bit-for-bit identical output to the original thread-pool version (3 duplicate files)."""
-    from arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceBak
-    from arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceZero
+    from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceBak
+    from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService as GtfsRtFetchServiceZero
 
     def _make_mocks():
         file_client = MagicMock()

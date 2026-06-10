@@ -3,11 +3,11 @@
 import threading
 from pathlib import Path
 
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.rt_parser import GtfsRtParser
-from arpi.log import ApplicationLogger
-from arpi.models.agency_settings import VehiclePositionMappingStrategy
-from arpi.models.transit import FetchRequest
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.rt_parser import GtfsRtParser
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.agency_settings import VehiclePositionMappingStrategy
+from apex_transit_arpi.models.transit import FetchRequest
 
 from . import trip_updates, vehicle_positions
 

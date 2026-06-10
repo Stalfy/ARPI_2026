@@ -11,13 +11,13 @@ from pathlib import Path
 
 import polars as pl
 
-from arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
-from arpi.analyzer.utils import format_duration
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.log import ApplicationLogger
-from arpi.models.agency_settings import VehiclePositionMappingStrategy
-from arpi.models.transit import FeedType, FetchRequest, TimePeriod, TransitAgency
+from apex_transit_arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
+from apex_transit_arpi.analyzer.utils import format_duration
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.agency_settings import VehiclePositionMappingStrategy
+from apex_transit_arpi.models.transit import FeedType, FetchRequest, TimePeriod, TransitAgency
 
 
 class DailyAnalysisStatus(enum.Enum):

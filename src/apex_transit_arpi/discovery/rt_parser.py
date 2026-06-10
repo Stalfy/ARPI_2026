@@ -11,13 +11,13 @@ import polars as pl
 from google.protobuf.json_format import MessageToDict
 from google.transit import gtfs_realtime_pb2
 
-from arpi.discovery.shapes import calculate_position_on_shape
-from arpi.log import ApplicationLogger
-from arpi.models.gtfs_rt_strategy import StopIdStrategy
-from arpi.models.gtfs_segment import ShapeSegment
-from arpi.models.gtfs_stop import Stop
-from arpi.models.gtfs_stop_time import StopTime
-from arpi.models.gtfs_trip import Trip
+from apex_transit_arpi.discovery.shapes import calculate_position_on_shape
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.gtfs_rt_strategy import StopIdStrategy
+from apex_transit_arpi.models.gtfs_segment import ShapeSegment
+from apex_transit_arpi.models.gtfs_stop import Stop
+from apex_transit_arpi.models.gtfs_stop_time import StopTime
+from apex_transit_arpi.models.gtfs_trip import Trip
 
 
 class GtfsRtParser:

@@ -27,10 +27,10 @@ import pyarrow.parquet as pq
 import tqdm
 from google.transit import gtfs_realtime_pb2
 
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.log import ApplicationLogger
-from arpi.models.gtfs_stop_time import StopTime
-from arpi.models.transit import DelayUsingAgencies, FetchRequest, TimePeriod, TransitAgency
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.gtfs_stop_time import StopTime
+from apex_transit_arpi.models.transit import DelayUsingAgencies, FetchRequest, TimePeriod, TransitAgency
 
 from .constants import TU_SCHEMA
 from .helpers import ProtoRow, attr, hf, parse_header, str_or_ts

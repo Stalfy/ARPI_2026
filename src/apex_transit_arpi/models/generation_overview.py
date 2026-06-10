@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from arpi.models.transit import TransitAgency
+from apex_transit_arpi.models.transit import TransitAgency
 
 
 class GenerationSummary(BaseModel):

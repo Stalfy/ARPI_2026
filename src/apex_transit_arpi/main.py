@@ -11,12 +11,12 @@ from time import sleep
 
 import polars as pl
 
-from arpi.discovery import iter_day_dirs
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.gtfs_mapping import run as map_gtfs
-from arpi.discovery.rt_parser import GtfsRtParser
-from arpi.models.transit import FeedType, FetchRequest, TimePeriod
+from apex_transit_arpi.discovery import iter_day_dirs
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.gtfs_mapping import run as map_gtfs
+from apex_transit_arpi.discovery.rt_parser import GtfsRtParser
+from apex_transit_arpi.models.transit import FeedType, FetchRequest, TimePeriod
 
 _DEFAULT_GTFS_ROOT = "GTFS"
 _JOIN_KEY = ["trip_id", "stop_id", "pred_time"]
@@ -110,7 +110,7 @@ def _step_parquetize(
     force: bool = False,
 ) -> bool:
     """Parquetize one feed type for one day. Returns True if output is ready."""
-    from arpi import parquetizer
+    from apex_transit_arpi import parquetizer
 
     if not force and output_file.exists():
         print(f"  [{label}] cached")
@@ -134,7 +134,7 @@ def _step_parquetize(
 
 def _step_analyze(agency: str, day: date, orchestrator, output_file: Path, force: bool = False) -> bool:
     """Run the parquet-based analyzer for one day. Returns True if output exists when done."""
-    from arpi.analyzer import DailyAnalysisStatus
+    from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
     if not force and output_file.exists():
         return True
@@ -155,7 +155,7 @@ def _step_analyze(agency: str, day: date, orchestrator, output_file: Path, force
 
 def _step_legacy(orchestrator, agency, day: date, legacy_out: Path, force: bool = False) -> bool:
     """Run the zero-based legacy analyzer for one day. Returns True if output exists when done."""
-    from arpi.analyzer import DailyAnalysisStatus
+    from apex_transit_arpi.analyzer import DailyAnalysisStatus
 
     if not force and legacy_out.exists():
         return True
@@ -215,14 +215,14 @@ def main() -> None:
         key = (day_dir.parent.parent.name, day_dir.parent.name, day_dir.name)
         agency_days.setdefault(agency, {}).setdefault(key, {})[feed_name] = day_dir
 
-    from arpi.analyzer import BenchmarkOrchestrator
-    from arpi.analyzer.gtfs.parquetized import GtfsRtFetchService as ParquetFetchService
-    from arpi.models.transit import TransitAgency
+    from apex_transit_arpi.analyzer import BenchmarkOrchestrator
+    from apex_transit_arpi.analyzer.gtfs.parquetized import GtfsRtFetchService as ParquetFetchService
+    from apex_transit_arpi.models.transit import TransitAgency
 
     file_client = FileClient(local_path=str(base_dir))
 
     if args.compare:
-        from arpi.analyzer.gtfs.legacy import GtfsRtFetchService as ZeroFetchService
+        from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService as ZeroFetchService
 
     if args.agency:
         if args.agency not in agency_days:

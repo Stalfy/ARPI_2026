@@ -5,7 +5,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-from arpi.models.transit import TransitAgency
+from apex_transit_arpi.models.transit import TransitAgency
 
 
 @dataclass(frozen=True)

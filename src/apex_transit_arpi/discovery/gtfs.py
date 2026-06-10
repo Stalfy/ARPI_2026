@@ -7,18 +7,18 @@ import os
 
 import polars as pl
 
-from arpi.discovery.files import FileClient
-from arpi.discovery.shapes import shapes_to_segments
-from arpi.log import ApplicationLogger
-from arpi.models.gtfs import GTFSFile
-from arpi.models.gtfs_agency import Agency
-from arpi.models.gtfs_route import Route
-from arpi.models.gtfs_segment import ShapeSegment
-from arpi.models.gtfs_shape import Shape
-from arpi.models.gtfs_stop import Stop
-from arpi.models.gtfs_stop_time import StopTime
-from arpi.models.gtfs_trip import Trip
-from arpi.models.transit import TransitAgency
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.shapes import shapes_to_segments
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.gtfs import GTFSFile
+from apex_transit_arpi.models.gtfs_agency import Agency
+from apex_transit_arpi.models.gtfs_route import Route
+from apex_transit_arpi.models.gtfs_segment import ShapeSegment
+from apex_transit_arpi.models.gtfs_shape import Shape
+from apex_transit_arpi.models.gtfs_stop import Stop
+from apex_transit_arpi.models.gtfs_stop_time import StopTime
+from apex_transit_arpi.models.gtfs_trip import Trip
+from apex_transit_arpi.models.transit import TransitAgency
 
 
 class GtfsFetchService:

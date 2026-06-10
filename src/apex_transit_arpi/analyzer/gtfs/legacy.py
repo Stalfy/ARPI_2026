@@ -11,16 +11,16 @@ from typing import Any, Optional
 import polars as pl
 from tqdm import tqdm
 
-from arpi.analyzer.eta_benchmark_analysis import benchmark_builder
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.rt_parser import GtfsRtParser
-from arpi.log import ApplicationLogger
-from arpi.models.agency_settings import VehiclePositionMappingStrategy
-from arpi.models.gtfs_rt_strategy import StopIdStrategy
-from arpi.models.gtfs_segment import ShapeSegment
-from arpi.models.gtfs_trip import Trip
-from arpi.models.transit import DelayUsingAgencies, FeedType, FetchRequest, TimePeriod, TransitAgency
+from apex_transit_arpi.analyzer.eta_benchmark_analysis import benchmark_builder
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.rt_parser import GtfsRtParser
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.agency_settings import VehiclePositionMappingStrategy
+from apex_transit_arpi.models.gtfs_rt_strategy import StopIdStrategy
+from apex_transit_arpi.models.gtfs_segment import ShapeSegment
+from apex_transit_arpi.models.gtfs_trip import Trip
+from apex_transit_arpi.models.transit import DelayUsingAgencies, FeedType, FetchRequest, TimePeriod, TransitAgency
 
 
 class GtfsRtFetchService:

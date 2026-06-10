@@ -13,8 +13,8 @@ import threading
 from datetime import date, datetime
 from typing import Optional
 
-from arpi.log import ApplicationLogger
-from arpi.models.transit import FeedType, FetchRequest, TransitAgency
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.transit import FeedType, FetchRequest, TransitAgency
 
 
 def _extract_timestamp_from_path(object_path: str) -> Optional[datetime]:

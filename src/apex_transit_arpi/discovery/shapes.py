@@ -2,9 +2,9 @@
 
 from math import cos, hypot, radians
 
-from arpi.models.gtfs_segment import ShapeSegment
-from arpi.models.gtfs_shape import Shape
-from arpi.models.gtfs_stop import Stop
+from apex_transit_arpi.models.gtfs_segment import ShapeSegment
+from apex_transit_arpi.models.gtfs_shape import Shape
+from apex_transit_arpi.models.gtfs_stop import Stop
 
 
 def calculate_distance(x1: float, y1: float, x2: float, y2: float) -> float:

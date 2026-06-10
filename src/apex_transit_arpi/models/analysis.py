@@ -15,7 +15,7 @@ from typing import Optional
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from arpi.models.transit import TransitAgency
+from apex_transit_arpi.models.transit import TransitAgency
 
 
 @dataclass(frozen=True)

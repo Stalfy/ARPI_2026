@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 import pytest
 from google.transit import gtfs_realtime_pb2
 
-from arpi.parquetizer.helpers import attr, hf, parse_header, str_or_ts, ts
-from arpi.parquetizer.trip_updates import parse_file as parse_tu_file
-from arpi.parquetizer.trip_updates import parse_stop_time_event, parse_stop_time_properties
-from arpi.parquetizer.trip_updates import parse_trip_descriptor as parse_tu_trip
-from arpi.parquetizer.trip_updates import parse_trip_properties, parse_vehicle
-from arpi.parquetizer.vehicle_positions import parse_file as parse_vp_file
-from arpi.parquetizer.vehicle_positions import parse_position
-from arpi.parquetizer.vehicle_positions import parse_trip_descriptor as parse_vp_trip
-from arpi.parquetizer.vehicle_positions import parse_vehicle_descriptor
+from apex_transit_arpi.parquetizer.helpers import attr, hf, parse_header, str_or_ts, ts
+from apex_transit_arpi.parquetizer.trip_updates import parse_file as parse_tu_file
+from apex_transit_arpi.parquetizer.trip_updates import parse_stop_time_event, parse_stop_time_properties
+from apex_transit_arpi.parquetizer.trip_updates import parse_trip_descriptor as parse_tu_trip
+from apex_transit_arpi.parquetizer.trip_updates import parse_trip_properties, parse_vehicle
+from apex_transit_arpi.parquetizer.vehicle_positions import parse_file as parse_vp_file
+from apex_transit_arpi.parquetizer.vehicle_positions import parse_position
+from apex_transit_arpi.parquetizer.vehicle_positions import parse_trip_descriptor as parse_vp_trip
+from apex_transit_arpi.parquetizer.vehicle_positions import parse_vehicle_descriptor
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 

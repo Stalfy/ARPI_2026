@@ -7,8 +7,8 @@ from typing import Any
 
 import polars as pl
 
-from arpi.models.time_bucket import TimeBuckets
-from arpi.models.transit import TimePeriod
+from apex_transit_arpi.models.time_bucket import TimeBuckets
+from apex_transit_arpi.models.transit import TimePeriod
 
 MIN_HORIZON = 900
 

@@ -23,8 +23,8 @@ from pathlib import Path
 
 import polars as pl
 
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
 
 REF = Path(__file__).parent.parent / "ref"
 OUTPUT = REF / "output"
@@ -84,9 +84,9 @@ def _paths(day: date) -> dict[str, Path]:
 
 
 def run_duckdb(day: date, p: dict[str, Path], force: bool) -> None:
-    from arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
-    from arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
-    from arpi.models.transit import TransitAgency
+    from apex_transit_arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
+    from apex_transit_arpi.analyzer.gtfs.duckdb import GtfsRtFetchService
+    from apex_transit_arpi.models.transit import TransitAgency
 
     if force and p["duckdb"].exists():
         p["duckdb"].unlink()
@@ -131,9 +131,9 @@ def run_duckdb(day: date, p: dict[str, Path], force: bool) -> None:
 
 
 def run_zero(day: date, p: dict[str, Path], force: bool) -> None:
-    from arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
-    from arpi.analyzer.gtfs.legacy import GtfsRtFetchService
-    from arpi.models.transit import TransitAgency
+    from apex_transit_arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
+    from apex_transit_arpi.analyzer.gtfs.legacy import GtfsRtFetchService
+    from apex_transit_arpi.models.transit import TransitAgency
 
     if force and p["legacy"].exists():
         p["legacy"].unlink()
@@ -178,9 +178,9 @@ def run_zero(day: date, p: dict[str, Path], force: bool) -> None:
 
 
 def run_parquet(day: date, p: dict[str, Path], force: bool) -> None:
-    from arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
-    from arpi.analyzer.gtfs.parquetized import GtfsRtFetchService
-    from arpi.models.transit import TransitAgency
+    from apex_transit_arpi.analyzer import BenchmarkOrchestrator, DailyAnalysisStatus
+    from apex_transit_arpi.analyzer.gtfs.parquetized import GtfsRtFetchService
+    from apex_transit_arpi.models.transit import TransitAgency
 
     if force and p["analysis"].exists():
         p["analysis"].unlink()

@@ -12,13 +12,13 @@ from pathlib import Path
 import polars as pl
 import tqdm
 
-from arpi.analyzer.eta_benchmark_analysis import benchmark_builder
-from arpi.discovery.files import FileClient
-from arpi.discovery.gtfs import GtfsFetchService
-from arpi.discovery.rt_parser import GtfsRtParser
-from arpi.log import ApplicationLogger
-from arpi.models.transit import FetchRequest, TimePeriod, TransitAgency
-from arpi.parquetizer import trip_updates, vehicle_positions
+from apex_transit_arpi.analyzer.eta_benchmark_analysis import benchmark_builder
+from apex_transit_arpi.discovery.files import FileClient
+from apex_transit_arpi.discovery.gtfs import GtfsFetchService
+from apex_transit_arpi.discovery.rt_parser import GtfsRtParser
+from apex_transit_arpi.log import ApplicationLogger
+from apex_transit_arpi.models.transit import FetchRequest, TimePeriod, TransitAgency
+from apex_transit_arpi.parquetizer import trip_updates, vehicle_positions
 
 
 class GtfsRtFetchService:

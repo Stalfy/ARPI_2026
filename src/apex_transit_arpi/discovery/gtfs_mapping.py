@@ -15,7 +15,7 @@ from typing import Iterator
 import polars as pl
 import tqdm
 
-from arpi.models.gtfs import GTFSFile
+from apex_transit_arpi.models.gtfs import GTFSFile
 
 _TRIP_TIME_RE = re.compile(r"_(\d{1,2}:\d{2})$")
 
