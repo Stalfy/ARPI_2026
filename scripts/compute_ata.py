@@ -6,7 +6,7 @@ from compute_distance import RouteDistanceCalculator
 def enrich_frame(frame: pd.DataFrame) -> pd.DataFrame:
     pieces = []
 
-    for (shape_id, trip_id), idx in frame.groupby(["gtfs_shape_id", "gtfs_trip_id"], sort=False).groups.items():
+    for (service_date, shape_id, trip_id), idx in frame.groupby(["gtfs_service_date", "gtfs_shape_id", "gtfs_trip_id"], sort=False).groups.items():
         calc = calculators[(shape_id, trip_id)]
         sub = frame.loc[idx].copy()
 
@@ -119,6 +119,9 @@ stops = stops.rename(
     }
 )
 
+# Filter out bad joins as trip_id not unique
+df = df[df["travel_time_seconds"] < 1500]
+
 df = df.merge(stops, on="gtfs_stop_id", how="left")
 
 TIME_COLS = [
@@ -155,6 +158,7 @@ df["speed"] = df["distance_travelled_along_route"] / df["travel_time_seconds"]
 df["speed"] = df["speed"].clip(lower=0.01)
 
 obs_key_cols = [
+    "gtfs_service_date",
     "gtfs_shape_id",
     "gtfs_trip_id",
     "gtfsrt_vp_position_timestamp_previous",
@@ -167,27 +171,31 @@ obs_key_cols = [
 
 obs = (
     df[obs_key_cols + ["current_distance_along_route_m"]]
-    .dropna(subset=["gtfs_trip_id", "gtfsrt_vp_position_timestamp_current", "current_distance_along_route_m"])
+    .dropna(subset=["gtfs_service_date", "gtfs_trip_id", "gtfsrt_vp_position_timestamp_current", "current_distance_along_route_m"])
     .drop_duplicates(subset=obs_key_cols)
-    .sort_values(["gtfs_trip_id", "gtfsrt_vp_position_timestamp_current"])
+    .sort_values(["gtfs_service_date", "gtfs_trip_id", "gtfsrt_vp_position_timestamp_current"])
     .reset_index(drop=True)
 )
 
 stop_estimates = []
 
-for (shape_id, trip_id), calc in calculators.items():
-    obs_trip = obs[(obs["gtfs_shape_id"] == shape_id) & (obs["gtfs_trip_id"] == trip_id)].copy()
+for (service_date, shape_id, trip_id), idx in obs.groupby(["gtfs_service_date", "gtfs_shape_id", "gtfs_trip_id"], sort=False).groups.items():
+
+    calc = calculators[(shape_id, trip_id)]
+    obs_trip = obs.loc[idx].copy()
 
     if obs_trip.empty:
         continue
 
     stop_trip = estimate_stop_pass_times_for_trip(obs_trip, calc)
+    stop_trip["gtfs_service_date"] = service_date
     stop_trip["gtfs_shape_id"] = shape_id
     stop_trip["gtfs_trip_id"] = trip_id
 
     stop_estimates.append(
         stop_trip[
             [
+                "gtfs_service_date",
                 "gtfs_shape_id",
                 "gtfs_trip_id",
                 "gtfs_stop_sequence",
@@ -203,6 +211,7 @@ stop_estimates_df = (
     if stop_estimates
     else pd.DataFrame(
         columns=[
+            "gtfs_service_date",
             "gtfs_shape_id",
             "gtfs_trip_id",
             "gtfs_stop_sequence",
@@ -216,19 +225,26 @@ stop_estimates_df = (
 df = df.merge(
     stop_estimates_df[
         [
+            "gtfs_service_date",
             "gtfs_trip_id",
             "gtfs_stop_sequence",
             "estimated_stop_pass_time",
         ]
     ],
-    on=["gtfs_trip_id", "gtfs_stop_sequence"],
+    on=["gtfs_service_date", "gtfs_trip_id", "gtfs_stop_sequence"],
     how="left",
 )
+
+pred_ts = pd.to_datetime(df["gtfsrt_tu_prediction_timestamp"], unit="s", utc=True)
+pass_ts = pd.to_datetime(df["estimated_stop_pass_time"], utc=True)
+pred_arr = pd.to_datetime(df["gtfsrt_tu_stop_predicted_arrival"], utc=True)
+
+df["time_before_passing_stop"] = (pass_ts - pred_ts).dt.total_seconds()
+df["error_in_prediction"] = (pass_ts - pred_arr).dt.total_seconds()
 
 tz = "America/Montreal"
 
 df["gtfs_service_date"] = pd.to_datetime(df["gtfs_service_date"]).dt.date
-
 # timestamps to local time
 datetime_cols = [
     "gtfsrt_vp_position_timestamp_previous",
