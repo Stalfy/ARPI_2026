@@ -149,8 +149,8 @@ def build_map(current_row: pd.Series, active_stops: pd.DataFrame, past_stops: pd
                 lat=past_stops["gtfs_stop_latitude"],
                 lon=past_stops["gtfs_stop_longitude"],
                 mode="markers",
-                marker=dict(size=10),
-                opacity=0.35,
+                marker=dict(size=10, color="royalblue"),
+                opacity=0.4,
                 text=hover_text,
                 hovertemplate="%{text}<extra></extra>",
                 name="Past stops",
@@ -164,7 +164,7 @@ def build_map(current_row: pd.Series, active_stops: pd.DataFrame, past_stops: pd
                 lat=active_stops["gtfs_stop_latitude"],
                 lon=active_stops["gtfs_stop_longitude"],
                 mode="markers",
-                marker=dict(size=11),
+                marker=dict(size=11, color="royalblue"),
                 opacity=0.95,
                 text=hover_text,
                 hovertemplate="%{text}<extra></extra>",
@@ -177,7 +177,7 @@ def build_map(current_row: pd.Series, active_stops: pd.DataFrame, past_stops: pd
             lat=[current_row["gtfsrt_vp_position_latitude_current"]],
             lon=[current_row["gtfsrt_vp_position_longitude_current"]],
             mode="markers",
-            marker=dict(size=16),
+            marker=dict(size=16, color="red"),
             text=[
                 "<b>Current vehicle position</b>"
                 f"<br>timestamp: {fmt_ts(current_row.get('gtfsrt_vp_position_timestamp_current'))}"
@@ -290,8 +290,11 @@ if not trip_ids:
     st.stop()
 
 selected_trip = st.sidebar.selectbox("gtfs_trip_id", trip_ids)
-trip_df = df[df["gtfs_trip_id"].astype(str) == selected_trip].copy()
+trip_dates = sorted(df.loc[df["gtfs_trip_id"].astype(str) == selected_trip, "gtfs_service_date"].dropna().astype(str).unique().tolist())
 
+selected_service_date = st.sidebar.selectbox("gtfs_service_date", trip_dates)
+
+trip_df = df[(df["gtfs_trip_id"].astype(str) == selected_trip) & (df["gtfs_service_date"].astype(str) == selected_service_date)].copy()
 sort_cols = ["gtfsrt_vp_position_timestamp_current"]
 if "gtfs_stop_sequence" in trip_df.columns:
     sort_cols.append("gtfs_stop_sequence")
