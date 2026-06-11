@@ -1,7 +1,7 @@
-import pandas as pd
 import numpy as np
-from shapely.geometry import LineString, Point
+import pandas as pd
 from pyproj import Transformer
+from shapely.geometry import LineString, Point
 
 
 class RouteDistanceCalculator:
@@ -23,27 +23,16 @@ class RouteDistanceCalculator:
 
         self.shape_id = shape_id
 
-        route = (
-            shapes_df[shapes_df["shape_id"] == shape_id]
-            .sort_values("shape_pt_sequence")
-            .reset_index(drop=True)
-        )
+        route = shapes_df[shapes_df["shape_id"] == shape_id].sort_values("shape_pt_sequence").reset_index(drop=True)
 
         if len(route) < 2:
             raise ValueError(f"Shape {shape_id} has fewer than 2 points")
 
-        self.transformer = Transformer.from_crs(
-            source_crs,
-            metric_crs,
-            always_xy=True
-        )
+        self.transformer = Transformer.from_crs(source_crs, metric_crs, always_xy=True)
 
         self.shape_dist_traveled = route["shape_dist_traveled"].to_numpy(float)
 
-        self.xy = np.array([
-            self.transformer.transform(lon, lat)
-            for lon, lat in zip(route["shape_pt_lon"], route["shape_pt_lat"])
-        ])
+        self.xy = np.array([self.transformer.transform(lon, lat) for lon, lat in zip(route["shape_pt_lon"], route["shape_pt_lat"])])
 
         self.line = LineString(self.xy)
 
@@ -60,26 +49,18 @@ class RouteDistanceCalculator:
         self.trip_id = trip_id
 
         # Stop order for that trip.
-        route_stop_times = (
-            stop_times_df[stop_times_df["trip_id"] == trip_id]
-            .sort_values("stop_sequence")
-            .copy()
-        )
+        route_stop_times = stop_times_df[stop_times_df["trip_id"] == trip_id].sort_values("stop_sequence").copy()
 
         if route_stop_times.empty:
             raise ValueError(f"No stop_times found for trip_id={trip_id}")
 
         # Optional cleanup for station rows.
         if exclude_stations and "location_type" in stops_df.columns:
-            stops_df = stops_df[
-                stops_df["location_type"].isna() | (stops_df["location_type"] == 0)
-            ].copy()
+            stops_df = stops_df[stops_df["location_type"].isna() | (stops_df["location_type"] == 0)].copy()
 
         # Attach stop metadata once.
         route_stop_times = route_stop_times.merge(
-            stops_df[["stop_id", "stop_name", "stop_lat", "stop_lon", "parent_station"]],
-            on="stop_id",
-            how="left"
+            stops_df[["stop_id", "stop_name", "stop_lat", "stop_lon", "parent_station"]], on="stop_id", how="left"
         )
 
         self.route_stops_df = route_stop_times
@@ -90,17 +71,9 @@ class RouteDistanceCalculator:
         self.stop_positions_df = self._build_stop_positions(self.route_stops_df)
 
         # Lookups used at runtime.
-        self.stop_sequence_lookup = (
-            self.route_stops_df
-            .set_index("stop_sequence")["stop_id"]
-            .to_dict()
-        )
+        self.stop_sequence_lookup = self.route_stops_df.set_index("stop_sequence")["stop_id"].to_dict()
 
-        self.stop_distance_lookup = (
-            self.stop_positions_df
-            .set_index("stop_id")["distance_along_route_m"]
-            .to_dict()
-        )
+        self.stop_distance_lookup = self.stop_positions_df.set_index("stop_id")["distance_along_route_m"].to_dict()
 
     def _project_point_uncached(self, lon, lat):
         x, y = self.transformer.transform(lon, lat)
@@ -119,13 +92,7 @@ class RouteDistanceCalculator:
             distance_along_route_m = self.shape_dist_traveled[idx]
         else:
             t = (s - seg_start) / (seg_end - seg_start)
-            distance_along_route_m = (
-                self.shape_dist_traveled[idx]
-                + t * (
-                    self.shape_dist_traveled[idx + 1]
-                    - self.shape_dist_traveled[idx]
-                )
-            )
+            distance_along_route_m = self.shape_dist_traveled[idx] + t * (self.shape_dist_traveled[idx + 1] - self.shape_dist_traveled[idx])
 
         return distance_along_route_m, offset
 
@@ -158,27 +125,22 @@ class RouteDistanceCalculator:
             if pd.isna(stop.get("stop_lat")) or pd.isna(stop.get("stop_lon")):
                 continue
 
-            distance_along_route_m, offset_m = self.project_point(
-                stop["stop_lon"],
-                stop["stop_lat"]
+            distance_along_route_m, offset_m = self.project_point(stop["stop_lon"], stop["stop_lat"])
+
+            rows.append(
+                {
+                    "stop_sequence": stop.get("stop_sequence"),
+                    "stop_id": stop.get("stop_id"),
+                    "stop_name": stop.get("stop_name"),
+                    "parent_station": stop.get("parent_station"),
+                    "stop_lat": stop.get("stop_lat"),
+                    "stop_lon": stop.get("stop_lon"),
+                    "distance_along_route_m": distance_along_route_m,
+                    "offset_from_route_m": offset_m,
+                }
             )
 
-            rows.append({
-                "stop_sequence": stop.get("stop_sequence"),
-                "stop_id": stop.get("stop_id"),
-                "stop_name": stop.get("stop_name"),
-                "parent_station": stop.get("parent_station"),
-                "stop_lat": stop.get("stop_lat"),
-                "stop_lon": stop.get("stop_lon"),
-                "distance_along_route_m": distance_along_route_m,
-                "offset_from_route_m": offset_m,
-            })
-
-        return (
-            pd.DataFrame(rows)
-            .sort_values("stop_sequence")
-            .reset_index(drop=True)
-        )
+        return pd.DataFrame(rows).sort_values("stop_sequence").reset_index(drop=True)
 
     def add_distance_to_stops(self, df, current_lat_col, current_lon_col, stop_sequence_col):
         """
@@ -193,27 +155,18 @@ class RouteDistanceCalculator:
 
         out[stop_sequence_col] = pd.to_numeric(out[stop_sequence_col], errors="coerce")
 
-        current_pairs = list(zip(
-            out[current_lon_col].astype(float),
-            out[current_lat_col].astype(float)
-        ))
+        current_pairs = list(zip(out[current_lon_col].astype(float), out[current_lat_col].astype(float)))
 
         current_unique = {}
         for lon, lat in set(current_pairs):
             current_unique[(lon, lat)] = self.project_point(lon, lat)
 
-        out["current_distance_along_route_m"] = [
-            current_unique[p][0] for p in current_pairs
-        ]
-        out["current_offset_from_route_m"] = [
-            current_unique[p][1] for p in current_pairs
-        ]
+        out["current_distance_along_route_m"] = [current_unique[p][0] for p in current_pairs]
+        out["current_offset_from_route_m"] = [current_unique[p][1] for p in current_pairs]
 
         # Lookup path only
         out["stop_id"] = out[stop_sequence_col].map(self.stop_sequence_lookup)
         out["stop_distance_along_route_m"] = out["stop_id"].map(self.stop_distance_lookup)
-        out["distance_to_stop_m"] = (
-            out["stop_distance_along_route_m"] - out["current_distance_along_route_m"]
-        )
+        out["distance_to_stop_m"] = out["stop_distance_along_route_m"] - out["current_distance_along_route_m"]
 
         return out

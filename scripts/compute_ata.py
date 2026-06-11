@@ -21,6 +21,7 @@ def enrich_frame(frame: pd.DataFrame) -> pd.DataFrame:
 
     return pd.concat(pieces).sort_index()
 
+
 def compute_distance(row):
     calc = calculators[(row["gtfs_shape_id"], row["gtfs_trip_id"])]
     return calc.distance_between_points_m(
@@ -30,27 +31,26 @@ def compute_distance(row):
         row["gtfsrt_vp_position_longitude_current"],
     )
 
+
 def estimate_stop_pass_times_for_trip(obs_trip: pd.DataFrame, calc: RouteDistanceCalculator, pos_tol_m: float = 5.0) -> pd.DataFrame:
     """
     Estimate one pass time per stop for a single trip.
 
-    Idea is that we use consecutive vehicle observations, detect when the route distance 
+    Idea is that we use consecutive vehicle observations, detect when the route distance
     # crosses a stop's route distance and interpolate time between the bracketing observations.
     """
     obs_trip = obs_trip.sort_values("gtfsrt_vp_position_timestamp_current").reset_index(drop=True)
 
-    stop_trip = calc.stop_positions_df.copy().rename(columns={
-        "stop_sequence": "gtfs_stop_sequence",
-        "distance_along_route_m": "stop_distance_along_route_m",
-        "offset_from_route_m": "stop_offset_from_route_m",
-    })
+    stop_trip = calc.stop_positions_df.copy().rename(
+        columns={
+            "stop_sequence": "gtfs_stop_sequence",
+            "distance_along_route_m": "stop_distance_along_route_m",
+            "offset_from_route_m": "stop_offset_from_route_m",
+        }
+    )
 
     stop_trip = stop_trip.sort_values("stop_distance_along_route_m").reset_index(drop=True)
-    stop_trip["estimated_stop_pass_time"] = pd.Series(
-        pd.NaT,
-        index=stop_trip.index,
-        dtype="datetime64[ns, UTC]"
-    )
+    stop_trip["estimated_stop_pass_time"] = pd.Series(pd.NaT, index=stop_trip.index, dtype="datetime64[ns, UTC]")
 
     if stop_trip.empty or len(obs_trip) < 2:
         return stop_trip
@@ -111,11 +111,13 @@ def estimate_stop_pass_times_for_trip(obs_trip: pd.DataFrame, calc: RouteDistanc
 df = pd.read_csv("vehicle_position_timesteps.csv")
 
 stops = pd.read_csv("ref/GTFS/RTL/stops.txt")[["stop_id", "stop_lat", "stop_lon"]]
-stops = stops.rename(columns={
-    "stop_id": "gtfs_stop_id",
-    "stop_lat": "gtfs_stop_latitude",
-    "stop_lon": "gtfs_stop_longitude",
-})
+stops = stops.rename(
+    columns={
+        "stop_id": "gtfs_stop_id",
+        "stop_lat": "gtfs_stop_latitude",
+        "stop_lon": "gtfs_stop_longitude",
+    }
+)
 
 df = df.merge(stops, on="gtfs_stop_id", how="left")
 
@@ -137,21 +139,14 @@ for col in TIME_COLS:
             df[col] = pd.to_datetime(df[col], utc=True, errors="coerce")
 
 
-shape_trip_pairs = (
-    df[["gtfs_shape_id", "gtfs_trip_id"]]
-    .dropna()
-    .drop_duplicates()
-)
+shape_trip_pairs = df[["gtfs_shape_id", "gtfs_trip_id"]].dropna().drop_duplicates()
 
 calculators = {}
 for shape_id, trip_id in shape_trip_pairs.itertuples(index=False, name=None):
     calculators[(shape_id, trip_id)] = RouteDistanceCalculator(shape_id, trip_id=trip_id)
 
 df = df.dropna(subset=["gtfs_stop_sequence"]).copy()
-df = df.sort_values(
-    ["gtfs_trip_id", "gtfsrt_vp_position_timestamp_current"],
-    ignore_index=True
-)
+df = df.sort_values(["gtfs_trip_id", "gtfsrt_vp_position_timestamp_current"], ignore_index=True)
 
 df = enrich_frame(df)
 
@@ -181,10 +176,7 @@ obs = (
 stop_estimates = []
 
 for (shape_id, trip_id), calc in calculators.items():
-    obs_trip = obs[
-        (obs["gtfs_shape_id"] == shape_id) &
-        (obs["gtfs_trip_id"] == trip_id)
-    ].copy()
+    obs_trip = obs[(obs["gtfs_shape_id"] == shape_id) & (obs["gtfs_trip_id"] == trip_id)].copy()
 
     if obs_trip.empty:
         continue
@@ -194,35 +186,64 @@ for (shape_id, trip_id), calc in calculators.items():
     stop_trip["gtfs_trip_id"] = trip_id
 
     stop_estimates.append(
-        stop_trip[[
+        stop_trip[
+            [
+                "gtfs_shape_id",
+                "gtfs_trip_id",
+                "gtfs_stop_sequence",
+                "stop_id",
+                "stop_name",
+                "estimated_stop_pass_time",
+            ]
+        ]
+    )
+
+stop_estimates_df = (
+    pd.concat(stop_estimates, ignore_index=True)
+    if stop_estimates
+    else pd.DataFrame(
+        columns=[
             "gtfs_shape_id",
             "gtfs_trip_id",
             "gtfs_stop_sequence",
             "stop_id",
             "stop_name",
             "estimated_stop_pass_time",
-        ]]
+        ]
     )
-
-stop_estimates_df = pd.concat(stop_estimates, ignore_index=True) if stop_estimates else pd.DataFrame(
-    columns=[
-        "gtfs_shape_id",
-        "gtfs_trip_id",
-        "gtfs_stop_sequence",
-        "stop_id",
-        "stop_name",
-        "estimated_stop_pass_time",
-    ]
 )
 
 df = df.merge(
-    stop_estimates_df[[
-        "gtfs_trip_id",
-        "gtfs_stop_sequence",
-        "estimated_stop_pass_time",
-    ]],
+    stop_estimates_df[
+        [
+            "gtfs_trip_id",
+            "gtfs_stop_sequence",
+            "estimated_stop_pass_time",
+        ]
+    ],
     on=["gtfs_trip_id", "gtfs_stop_sequence"],
-    how="left"
+    how="left",
+)
+
+tz = "America/Montreal"
+
+df["gtfs_service_date"] = pd.to_datetime(df["gtfs_service_date"]).dt.date
+
+# timestamps to local time
+datetime_cols = [
+    "gtfsrt_vp_position_timestamp_previous",
+    "gtfsrt_vp_position_timestamp_current",
+    "gtfsrt_tu_stop_predicted_arrival",
+    "gtfsrt_tu_stop_predicted_departure",
+    "estimated_stop_pass_time",
+]
+
+for col in datetime_cols:
+    df[col] = pd.to_datetime(df[col], utc=True).dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+# Unix timestamp column
+df["gtfsrt_tu_prediction_timestamp"] = (
+    pd.to_datetime(df["gtfsrt_tu_prediction_timestamp"], unit="s", utc=True).dt.tz_convert(tz).dt.strftime("%Y-%m-%d %H:%M:%S")
 )
 
 df.to_csv("vehicle_position_timesteps_updated.csv", index=False)
